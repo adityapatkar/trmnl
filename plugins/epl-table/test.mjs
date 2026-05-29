@@ -20,10 +20,11 @@ async function render({ standings = 'standings', form, now } = {}) {
   });
 }
 
-test('renders title with PL logo', async () => {
+test('renders title with PL logo badge', async () => {
   const html = await render();
   assert.match(html, /Premier League/i);
-  assert.match(html, /Premier_League_Logo\.svg/);
+  // Text badge in a circle (no external image dependency on e-ink)
+  assert.match(html, /class="pl-logo"[^>]*>PL</);
 });
 
 test('renders 20 rows split 10+10', async () => {

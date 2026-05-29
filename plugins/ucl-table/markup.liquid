@@ -18,7 +18,7 @@ table.standings tbody tr.cut-line td { border-bottom: 1.5px dashed #888; }
 .legend { padding: 4px 22px 6px; font-family: var(--mono); font-size: 10px; color: var(--ink-soft); letter-spacing: 0.08em; display: flex; gap: 18px; border-top: 1px solid var(--rule); }
 .legend .swatch { display: inline-block; width: 8px; height: 8px; background: var(--ink); margin-right: 5px; vertical-align: middle; }
 .legend .swatch.grey { background: #999; }
-.ucl-logo { width: 40px; height: 40px; flex-shrink: 0; object-fit: contain; filter: grayscale(100%) contrast(1.6) brightness(0.85); }
+.ucl-logo { width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--ink); color: var(--bg); border-radius: 50%; font-family: var(--sans); font-weight: 900; font-size: 13px; letter-spacing: 0.04em; }
 .bracket-grid { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 8px 16px; }
 .bracket-col { display: flex; flex-direction: column; gap: 5px; }
 .bracket-col h4 { margin: 0 0 4px; font-size: 10px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; padding-bottom: 3px; border-bottom: 1px solid var(--ink); }
@@ -46,7 +46,7 @@ table.standings tbody tr.cut-line td { border-bottom: 1.5px dashed #888; }
 
   <div class="screen">
     <div class="title-bar">
-      <img class="ucl-logo" alt="UEFA Champions League" src="https://upload.wikimedia.org/wikipedia/en/d/d5/UEFA_Champions_League.svg"/>
+      <div class="ucl-logo" aria-label="UEFA Champions League">UCL</div>
       <div class="t-stack">
         <span class="t">UEFA Champions League</span>
         <span class="t-sub">Knockout phase</span>
@@ -133,7 +133,7 @@ table.standings tbody tr.cut-line td { border-bottom: 1.5px dashed #888; }
     {%- assign matchday = IDX_0.season.currentMatchday | default: "?" -%}
     <div class="screen">
       <div class="title-bar">
-        <img class="ucl-logo" alt="UEFA Champions League" src="https://upload.wikimedia.org/wikipedia/en/d/d5/UEFA_Champions_League.svg"/>
+        <div class="ucl-logo" aria-label="UEFA Champions League">UCL</div>
         <div class="t-stack">
           <span class="t">UEFA Champions League</span>
           <span class="t-sub">{{ IDX_0.season.startDate | date: "%Y" }}–{{ IDX_0.season.endDate | date: "%y" }} · League Phase · MD {{ matchday }}</span>
