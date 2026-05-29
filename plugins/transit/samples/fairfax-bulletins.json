@@ -1,0 +1,233 @@
+{
+    "bustime-response": {
+        "sb": [
+            {
+                "nm": "Route 463SB: Delay",
+                "sbj": "Route 463SB: Delay",
+                "dtl": "Route 463SB: Due to operational issues, the trip leaving Chain Bridge @ @ Old Courthouse at 11:43am is experiencing delays of 5-15 minutes.JM",
+                "brf": "Route 463SB: Due to operational issues, the trip leaving Chain Bridge @ @ Old Courthouse at 11:43am is experiencing delays of 5-15 minutes.JM",
+                "prty": "High",
+                "cse": "Other cause",
+                "efct": "Other effect",
+                "srvc": [
+                    {
+                        "rt": "463",
+                        "rtdir": "South",
+                        "stpid": "",
+                        "stpnm": ""
+                    }
+                ],
+                "mod": "20260528 11:35:20"
+            },
+            {
+                "nm": "Route 495SB - Missed Trip",
+                "sbj": "Route 495SB - Missed Trip",
+                "dtl": "SB: Due to operational issues, the trip leaving Tysons Corner Metro at 4:20PM & 6:40PM was missed. CR",
+                "brf": "SB: Due to operational issues, the trip leaving Tysons Corner Metro at 4:20PM & 6:40PM was missed. CR",
+                "prty": "High",
+                "cse": "Other cause",
+                "efct": "Other effect",
+                "srvc": [
+                    {
+                        "rt": "495",
+                        "rtdir": "",
+                        "stpid": "",
+                        "stpnm": ""
+                    }
+                ],
+                "mod": "20260528 16:17:39"
+            },
+            {
+                "nm": "Route 463NB: Missed Trip",
+                "sbj": "Route 463NB: Missed Trip",
+                "dtl": "Route 463NB: Due to operational issues, the trip leaving Vienna Merto North at 11:05am was missed.JM",
+                "brf": "Route 463NB: Due to operational issues, the trip leaving Vienna Merto North at 11:05am was missed.JM",
+                "prty": "High",
+                "cse": "Other cause",
+                "efct": "Other effect",
+                "srvc": [
+                    {
+                        "rt": "463",
+                        "rtdir": "North",
+                        "stpid": "",
+                        "stpnm": ""
+                    }
+                ],
+                "mod": "20260528 11:31:45"
+            },
+            {
+                "nm": "Route 660EB: Missed Trip",
+                "sbj": "Route 660EB: Missed Trip",
+                "dtl": "Route 660EB: Due to operational issues, the trip leaving Centreville P&R at 7:20am and 8:00am was missed.JM",
+                "brf": "Route 660EB: Due to operational issues, the trip leaving Centreville P&R at 7:20am and 8:00am was missed.JM",
+                "prty": "High",
+                "cse": "Other cause",
+                "efct": "Other effect",
+                "srvc": [
+                    {
+                        "rt": "660",
+                        "rtdir": "Eastbound",
+                        "stpid": "",
+                        "stpnm": ""
+                    }
+                ],
+                "mod": "20260528 07:34:21"
+            },
+            {
+                "nm": "Route 463SB: Missed Stops",
+                "sbj": "Route 463SB: Missed Stops",
+                "dtl": "Route 463SB: Due to operational issues, stops were missed at 11:30am between Tysons Corner Metro and Chain Bridge @ @ Old Courthouse.JM",
+                "brf": "Route 463SB: Due to operational issues, stops were missed at 11:30am between Tysons Corner Metro and Chain Bridge @ @ Old Courthouse.JM",
+                "prty": "High",
+                "cse": "Other cause",
+                "efct": "Other effect",
+                "srvc": [
+                    {
+                        "rt": "463",
+                        "rtdir": "South",
+                        "stpid": "",
+                        "stpnm": ""
+                    }
+                ],
+                "mod": "20260528 11:34:12"
+            },
+            {
+                "nm": "Route494NB&SB:Delay",
+                "sbj": "Route494NB&SB:Delay",
+                "dtl": "Route 494 NB & SB: Due to operational issues, all trips are experiecing delays of 14-24 minutes.TB",
+                "brf": " NB & SB: Due to operational issues, all trips are experiecing delays of 14-24 minutes.TB",
+                "prty": "High",
+                "cse": "Unknown cause",
+                "efct": "Unknown effect",
+                "srvc": [
+                    {
+                        "rt": "494",
+                        "rtdir": "",
+                        "stpid": "",
+                        "stpnm": ""
+                    }
+                ],
+                "mod": "20260528 13:10:00"
+            },
+            {
+                "nm": "*Springfield Elevators",
+                "sbj": "Springfield Elevators",
+                "dtl": "Springfield Commuter Garage/CBC: The elevators on both the walkway and garage are out of service, until further notice. Please plan accordingly. We appreciate your patience.",
+                "brf": "Springfield Commuter Garage/CBC: The elevators on both the walkway and garage are out of service, until further notice.",
+                "prty": "High",
+                "cse": "Other cause",
+                "efct": "Other effect",
+                "srvc": [],
+                "mod": "20251219 15:03:40"
+            },
+            {
+                "nm": "Route 463NB Missed Trip",
+                "sbj": "Route 463NB Missed Trip",
+                "dtl": "Route 463NB: Due to operational issues, the trip leaving Vienna Metro North at 5:35am was missed.AH",
+                "brf": "NB: Due to operational issues, the trip leaving Vienna Metro North at 5:35am was missed.AH",
+                "prty": "High",
+                "cse": "Other cause",
+                "efct": "Other effect",
+                "srvc": [
+                    {
+                        "rt": "463",
+                        "rtdir": "",
+                        "stpid": "",
+                        "stpnm": ""
+                    }
+                ],
+                "mod": "20260528 05:43:51"
+            },
+            {
+                "nm": "Route 494NB - Missed Trip",
+                "sbj": "Route 494NB - Missed Trip",
+                "dtl": "NB: Due to a traffic accident, the trip leaving Tysons Corner Metro at 5:32PM was missed. CR",
+                "brf": "NB: Due to a traffic accident, the trip leaving Tysons Corner Metro at 5:32PM was missed. CR",
+                "prty": "High",
+                "cse": "Other cause",
+                "efct": "Other effect",
+                "srvc": [
+                    {
+                        "rt": "494",
+                        "rtdir": "",
+                        "stpid": "",
+                        "stpnm": ""
+                    }
+                ],
+                "mod": "20260528 17:37:01"
+            },
+            {
+                "nm": "Route 660EB - Missed Trip",
+                "sbj": "Route 660EB - Missed Trip",
+                "dtl": "EB: Due to operational issues, the trip leaving Centrevile PNR at 3:35PM was missed. CR",
+                "brf": "EB: Due to operational issues, the trip leaving Centrevile PNR at 3:35PM was missed. CR",
+                "prty": "High",
+                "cse": "Other cause",
+                "efct": "Other effect",
+                "srvc": [
+                    {
+                        "rt": "660",
+                        "rtdir": "",
+                        "stpid": "",
+                        "stpnm": ""
+                    }
+                ],
+                "mod": "20260528 16:38:50"
+            },
+            {
+                "nm": "Route 660WB - Missed Trip",
+                "sbj": "Route 660WB - Missed Trip",
+                "dtl": "WB: Due to operational issues, the trip leaving Tysons Corner Metro at 4:15PM was missed. CR",
+                "brf": "WB: Due to operational issues, the trip leaving Tysons Corner Metro at 4:15PM was missed. CR",
+                "prty": "High",
+                "cse": "Other cause",
+                "efct": "Other effect",
+                "srvc": [
+                    {
+                        "rt": "660",
+                        "rtdir": "",
+                        "stpid": "",
+                        "stpnm": ""
+                    }
+                ],
+                "mod": "20260528 16:39:21"
+            },
+            {
+                "nm": "Route 494 NB & SB - Delay",
+                "sbj": "Route 494 NB & SB - Delay",
+                "dtl": " NB & SB: Due to operational issues, all buses are experiencing delays of 14-24, minutes. CR",
+                "brf": " NB & SB: Due to operational issues, all buses are experiencing delays of 14-24, minutes. CR",
+                "prty": "High",
+                "cse": "Other cause",
+                "efct": "Other effect",
+                "srvc": [
+                    {
+                        "rt": "494",
+                        "rtdir": "",
+                        "stpid": "",
+                        "stpnm": ""
+                    }
+                ],
+                "mod": "20260528 16:27:10"
+            },
+            {
+                "nm": "Route 660WB: Missed Trip",
+                "sbj": "Route 660WB: Missed Trip",
+                "dtl": "Route 660WB: Due to operational issues, the trip leaving Tysons Corner Metro at 8:05 and 8:50am was missed.JM",
+                "brf": "Route 660WB: Due to operational issues, the trip leaving Tysons Corner Metro at 8:50am was missed.JM",
+                "prty": "High",
+                "cse": "Other cause",
+                "efct": "Other effect",
+                "srvc": [
+                    {
+                        "rt": "660",
+                        "rtdir": "Westbound",
+                        "stpid": "",
+                        "stpnm": ""
+                    }
+                ],
+                "mod": "20260528 07:34:43"
+            }
+        ]
+    }
+}
