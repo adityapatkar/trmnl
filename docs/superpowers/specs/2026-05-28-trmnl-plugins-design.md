@@ -177,11 +177,11 @@ api_key={{ wmata_api_key }}
 | `fairfax_stop_ids`   | Comma-separated stop IDs       | *(blank — set during setup, 2–3 nearest stops)*    |
 | `fairfax_base_url`   | BusTime API base URL           | `http://realtime.fairfaxcounty.gov/bustime/api/v3` |
 
-The transit plugin's two metro-direction labels (e.g., "Toward Largo / east" and "Toward Ashburn / west") are not hard-coded; they're derived from the `DirectionNum` and per-train `DestinationName` in the WMATA response, so the plugin labels itself correctly regardless of which station the user picks.
+The transit plugin's two metro-direction labels (e.g., "Toward Largo" and "Toward Ashburn") are not hard-coded; they're derived from the `Group` field (WMATA's "1"/"2" track identifier) and the most common `DestinationName` per group in the response, so the plugin labels itself correctly regardless of which station the user picks.
 
 ### Data shape
 
-- `IDX_0.Trains[]` — `Line` (line code: `"SV"`, `"OR"`, `"BL"`, `"RD"`, `"GR"`, `"YL"`), `Destination`, `DestinationName`, `LocationCode`, `Min` (number, `"ARR"`, `"BRD"`, or `"---"`), `DirectionNum` (`"1"` / `"2"`), `Car` (`"6"` or `"8"`).
+- `IDX_0.Trains[]` — `Line` (line code: `"SV"`, `"OR"`, `"BL"`, `"RD"`, `"GR"`, `"YL"`), `Destination`, `DestinationCode` (may be `null`), `DestinationName`, `LocationCode`, `LocationName`, `Min` (number, `"ARR"`, `"BRD"`, or `"---"`), `Group` (`"1"` or `"2"` — the WMATA-internal direction code; group 1 = one platform/track, group 2 = the other), `Car` (`"6"` or `"8"`).
 - `IDX_1["bustime-response"].prd[]` — `rt` (route), `rtdir` (direction), `des` (headsign), `stpnm` (stop name), `stpid`, `prdctdn` (countdown: `"DUE"` or minutes), `prdtm` (timestamp), `dyn` (delay flag).
 - `IDX_1["bustime-response"].error[]` — error objects when something fails.
 - `IDX_2.Incidents[]` — WMATA rail incidents: `IncidentID`, `Description`, `DateUpdated` (ISO), `IncidentType` (e.g., `"Alert"`, `"Delay"`), `LinesAffected` (string of semicolon-separated line codes — e.g., `"SV;OR;"`).
@@ -190,7 +190,7 @@ The transit plugin's two metro-direction labels (e.g., "Toward Largo / east" and
 
 ### Shaping logic
 
-- **Trains**: parse `Min` ("ARR"/"BRD" → 0). Sort ascending. Group by `DirectionNum` (1/2). For the direction label, take the most common `DestinationName` within each direction. Take first 4 per direction.
+- **Trains**: parse `Min` ("ARR"/"BRD" → 0). Sort ascending. Group by `Group` (WMATA's "1"/"2" track code). For the direction label, take the most common `DestinationName` within each group. Take first 4 per group.
 - **Buses**: parse `prdctdn` ("DUE" → 0). Sort ascending. Group by `stpid` (or `stpnm`). Take first 3–4 per stop.
 - **Rail alerts (filter to our lines)**: derive the set of line codes serving the configured station from the first `Trains` entry's `Line` field (every train at a single station shares that station's line(s)). Then keep only incidents whose `LinesAffected` contains any of those codes. Sort by `DateUpdated` descending. Truncate `Description` to ~120 chars for display.
 - **Bus alerts (filter to our stops)**: the `getservicebulletins?stpid=...` query already scopes server-side to bulletins for the configured stops. Sort by `priority` (High > Medium > Low) then by issuance time. Take the top 1–2 active bulletins. Use `brief` (or `subject` as fallback) for display.

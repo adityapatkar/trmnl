@@ -910,10 +910,10 @@ test('renders LN / CAR / DEST / MIN header row for metro', async () => {
   assert.match(html, /LN[\s\S]*CAR[\s\S]*DEST[\s\S]*MIN/);
 });
 
-test('renders direction dividers derived from DirectionNum + destinations', async () => {
+test('renders direction dividers derived from Group + destinations', async () => {
   const html = await renderAll();
   // From the captured fixture, expect at least one direction label
-  assert.match(html, /(Largo|Ashburn|Wiehle|Downtown|Mt Vernon|New Carrollton)/i);
+  assert.match(html, /(Largo|Ashburn|Wiehle|Downtown|Mt Vernon|New Carrollton|NewCrlton)/i);
 });
 
 test('renders ARR / BRD / numeric minutes correctly', async () => {
@@ -950,8 +950,8 @@ Replace the `<div style="padding: 12px 22px; flex: 1;">` placeholder inside `plu
 <div style="display: grid; grid-template-columns: 1.05fr 1fr; flex: 1; min-height: 0;">
   <div style="padding: 12px 18px;">
     {%- assign trains = IDX_0.Trains | default: empty -%}
-    {%- assign east = trains | where: "DirectionNum", "2" -%}
-    {%- assign west = trains | where: "DirectionNum", "1" -%}
+    {%- assign east = trains | where: "Group", "1" -%}
+    {%- assign west = trains | where: "Group", "2" -%}
 
     <div class="dark-strip" style="display: grid; grid-template-columns: 34px 40px 1fr 50px; gap: 6px;">
       <span style="text-align: center;">LN</span>
@@ -966,11 +966,11 @@ Replace the `<div style="padding: 12px 22px; flex: 1;">` placeholder inside `plu
       {%- for dirset in "east,west" | split: "," -%}
         {%- if dirset == "east" -%}
           {%- assign rows = east -%}
-          {%- assign label_dest = east | map: "DestinationName" | first | default: "East" -%}
+          {%- assign label_dest = east | map: "DestinationName" | first | default: "Inbound" -%}
           {%- assign dir_label = "Toward " | append: label_dest -%}
         {%- else -%}
           {%- assign rows = west -%}
-          {%- assign label_dest = west | map: "DestinationName" | first | default: "West" -%}
+          {%- assign label_dest = west | map: "DestinationName" | first | default: "Outbound" -%}
           {%- assign dir_label = "Toward " | append: label_dest -%}
         {%- endif -%}
 
