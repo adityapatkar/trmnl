@@ -7,7 +7,7 @@
   "scripts": {
     "render": "node tools/render.mjs",
     "preview": "node tools/preview.mjs",
-    "test": "node --test tools/*.test.mjs plugins/*/test.mjs"
+    "test": "node --test tools/*.test.mjs plugins/*/*.test.mjs plugins/*/test.mjs"
   },
   "dependencies": {
     "liquidjs": "^10.16.1",

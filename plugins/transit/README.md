@@ -38,7 +38,9 @@ https://gbfs.capitalbikeshare.com/gbfs/en/station_status.json
 
 6. **Markup**: paste the contents of `markup.liquid`, **but first inline `_shared/styles.css`** because TRMNL's Liquid does not support the local `include_raw` tag we use for local rendering. To inline: open `plugins/_shared/styles.css`, copy its contents, then in `markup.liquid` replace `{% include_raw "plugins/_shared/styles.css" %}` with the raw CSS.
 
-7. **Save**, click **Force Refresh**, verify the preview matches `preview.html` we generated locally.
+7. **Transform** (Markup Editor → Transform tab): paste the contents of [`transform.js`](transform.js). This is **required** if you configure the Capital Bikeshare URL — the raw GBFS feed is ~300 KB (all 838 stations) and TRMNL caps polling responses at 100 KB. The transform runs in Node v22 in TRMNL's sandbox and filters the GBFS response down to just the stations listed in `cabi_station_ids`. If you don't configure CaBi (leave both `cabi_*` fields blank AND omit the GBFS polling URL), the transform is unnecessary.
+
+8. **Save**, click **Force Refresh**, verify the preview matches `preview.html` we generated locally.
 
 ## API field-name notes (from live verification)
 
