@@ -25,7 +25,56 @@
     <div class="placeholder setup">Add your football-data.org API key in plugin settings.</div>
   </div>
 {%- elsif IDX_1.matches and IDX_1.matches.size > 0 -%}
-  <div class="screen"><div class="placeholder">Live view rendered in Task 2.3.</div></div>
+  {%- assign live = IDX_1.matches[0] -%}
+  {%- assign venue = live.venue -%}
+  {%- if venue == blank -%}
+    {%- if live.homeTeam.id == 66 -%}{%- assign venue = "Old Trafford" -%}
+    {%- else -%}{%- assign venue = live.homeTeam.shortName | append: " ground" -%}{%- endif -%}
+  {%- endif -%}
+
+  {%- assign is_ht = false -%}
+  {%- if live.status == "PAUSED" -%}{%- assign is_ht = true -%}{%- endif -%}
+
+  {%- assign minute_str = "" -%}
+  {%- if is_ht -%}
+    {%- assign minute_str = "HT" -%}
+  {%- elsif live.minute == nil -%}
+    {%- assign minute_str = "--'" -%}
+  {%- elsif live.injuryTime and live.injuryTime > 0 -%}
+    {%- assign minute_str = live.minute | append: "+" | append: live.injuryTime | append: "'" -%}
+  {%- else -%}
+    {%- assign minute_str = live.minute | append: "'" -%}
+  {%- endif -%}
+
+  <div class="screen">
+    <div class="title-bar">
+      <div class="t-stack">
+        <span class="t">{{ live.competition.name }}{% if live.matchday %} · Matchday {{ live.matchday }}{% endif %}</span>
+        <span class="t-sub"><span class="live-pill">{% if is_ht %}● HT{% else %}● LIVE{% endif %}</span></span>
+      </div>
+    </div>
+    <div class="fixture-main">
+      <div class="team">
+        <img class="crest-img" alt="{{ live.homeTeam.shortName }}" src="{{ live.homeTeam.crest }}"/>
+        <div class="name">{{ live.homeTeam.shortName }}</div>
+        <div class="tla">{{ live.homeTeam.tla }}</div>
+      </div>
+      <div class="live-score-box">
+        <div class="score">{{ live.score.fullTime.home }} – {{ live.score.fullTime.away }}</div>
+        <div class="min-label">{{ minute_str }}</div>
+      </div>
+      <div class="team">
+        <img class="crest-img" alt="{{ live.awayTeam.shortName }}" src="{{ live.awayTeam.crest }}"/>
+        <div class="name">{{ live.awayTeam.shortName }}</div>
+        <div class="tla">{{ live.awayTeam.tla }}</div>
+      </div>
+    </div>
+    <div class="foot-strip">
+      <div class="cell"><div class="lbl">Half-time</div><div class="val">{% if live.score.halfTime.home != nil %}{{ live.score.halfTime.home }} – {{ live.score.halfTime.away }}{% else %}—{% endif %}</div></div>
+      <div class="cell"><div class="lbl">Venue</div><div class="val">{{ venue }}</div></div>
+      <div class="cell"><div class="lbl">Kicked off</div><div class="val">{{ live.utcDate | date: "%H:%M" }}</div></div>
+    </div>
+  </div>
 {%- elsif IDX_0.matches and IDX_0.matches.size > 0 -%}
   {%- assign m = IDX_0.matches[0] -%}
   {%- assign home_or_away = "AWAY" -%}

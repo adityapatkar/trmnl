@@ -64,3 +64,45 @@ test('shows off-season message when both fixture arrays empty', async () => {
   const html = await render({ next: 'off-season' });
   assert.match(html, /off-season|no fixture scheduled/i);
 });
+
+test('live view shows the score in a bordered box when IDX_1 has a match', async () => {
+  const html = await render({ live: 'live-match' });
+  const live = (await loadFixture('live-match')).matches[0];
+  const expected = `${live.score.fullTime.home} – ${live.score.fullTime.away}`;
+  // Some sources render "–" as "&ndash;" or "&#8211;". Allow either:
+  assert.ok(html.includes(expected) || html.includes(expected.replace('–', '&#8211;')) || html.match(/\d\s+(?:–|&#8211;|&ndash;)\s+\d/));
+});
+
+test('live view shows the current minute', async () => {
+  const html = await render({ live: 'live-match' });
+  const live = (await loadFixture('live-match')).matches[0];
+  assert.match(html, new RegExp(`${live.minute}'`));
+});
+
+test('live view shows HT badge when status is PAUSED', async () => {
+  // Build an ad-hoc paused fixture from the live one
+  const live = (await loadFixture('live-match'));
+  live.matches[0].status = 'PAUSED';
+  live.matches[0].minute = null;
+  // Write a temp file, then reuse the test path
+  const { writeFile } = await import('node:fs/promises');
+  const path = new URL('./samples/live-paused.json', import.meta.url);
+  await writeFile(path, JSON.stringify(live));
+  const html = await render({ live: 'live-paused' });
+  assert.match(html, /\bHT\b/);
+});
+
+test('live view shows the LIVE pill in the title bar', async () => {
+  const html = await render({ live: 'live-match' });
+  assert.match(html, /LIVE/);
+});
+
+test('live view shows stoppage time as "45+2" format when injuryTime > 0', async () => {
+  const live = (await loadFixture('live-match'));
+  live.matches[0].minute = 45;
+  live.matches[0].injuryTime = 2;
+  const { writeFile } = await import('node:fs/promises');
+  await writeFile(new URL('./samples/live-stoppage.json', import.meta.url), JSON.stringify(live));
+  const html = await render({ live: 'live-stoppage' });
+  assert.match(html, /45\+2/);
+});
