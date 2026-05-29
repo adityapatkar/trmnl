@@ -12,10 +12,10 @@ async function loadForm() {
 async function loadTemplate() {
   return readFile(new URL('./markup.liquid', import.meta.url), 'utf8');
 }
-async function render({ form, now } = {}) {
+async function render({ standings = 'standings', form, now } = {}) {
   return renderTemplate(await loadTemplate(), {
     formFields: { ...(await loadForm()), ...form },
-    idxResponses: [await loadFixture('standings')],
+    idxResponses: [await loadFixture(standings)],
     now,
   });
 }
@@ -47,4 +47,16 @@ test('shows UCL cut line after row 4, relegation cut after row 17', async () => 
   const html = await render();
   const cuts = (html.match(/cut-line/g) || []).length;
   assert.ok(cuts >= 2, `expected at least 2 cut lines, got ${cuts}`);
+});
+
+test('shows setup placeholder when the standings response is an auth error', async () => {
+  const html = await render({ standings: 'bad-token' });
+  assert.match(html, /Couldn't load Premier League data/i);
+  assert.match(html, /API token is invalid/i);
+});
+
+test('shows preseason placeholder when standings table is empty', async () => {
+  const html = await render({ standings: 'standings-empty' });
+  assert.match(html, /haven't been set for this season yet/i);
+  assert.match(html, /Season starts/i);
 });

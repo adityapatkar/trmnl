@@ -85,7 +85,7 @@ Each README has the exact polling URLs, headers, and the manual step of pasting 
 
 `markup.liquid` files use `{% include_raw "plugins/_shared/styles.css" %}` to pull in the shared design tokens during local rendering. TRMNL's Liquid engine does NOT support this tag. Before pasting markup into the admin UI:
 
-1. Open `plugins/_shared/styles.css`, copy its contents (102 lines, no `{` template markers).
+1. Open `plugins/_shared/styles.css`, copy its contents (no `{` template markers — paste verbatim).
 2. In your `markup.liquid` file, replace the `{% include_raw "plugins/_shared/styles.css" %}` line with the raw CSS contents.
 3. Paste the resulting markup into the TRMNL admin "Markup" editor.
 
@@ -106,8 +106,9 @@ Each plugin refreshes on its own interval independent of the playlist:
 
 ## Troubleshooting
 
-- **Plugin shows "Add your API key"** → form field is empty or the key value didn't save. Re-check the field in TRMNL admin.
-- **Plugin shows partial data / errors** → in the admin UI, hit "Force Refresh" and watch the preview pane. The response payload is shown in the developer panel.
+- **Plugin shows "Couldn't load … data"** → one or both polling URLs returned an auth error. Re-check the API key field(s) in TRMNL admin, then Force Refresh. The placeholder also surfaces the API's own error message (e.g., "Access denied due to invalid subscription key…") so you can match it back to the right key.
+- **Transit shows inline "WMATA error" or "Fairfax error" in one column** → only that side's key is broken; the other side is working. Fix just the affected key in form fields.
+- **Plugin shows partial data / no rows** → hit "Force Refresh" in the admin UI and watch the preview. The poll log and response payload appear in the developer panel.
 - **Off-season / no fixture** → Man Utd plugin shows "Off-season — no fixture scheduled" when no SCHEDULED match exists.
 - **UCL shows no highlighted row** → expected if Man Utd didn't qualify for the current UCL season.
 - **Crests look pixelated on e-ink** → check that the `crest-img` CSS filter (`grayscale(100%) contrast(1.5) brightness(0.92)`) is in the inlined CSS. Without it, colorful crests dither poorly.

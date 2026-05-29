@@ -30,8 +30,13 @@ table.standings tbody tr.cut-line td { border-bottom: 1.5px dashed #888; }
     Couldn't load Premier League data. Check your football-data.org API key.
     {% if IDX_0.message %}<br/><br/><small>{{ IDX_0.message }}</small>{% endif %}
   </div></div>
+{%- elsif IDX_0.standings[0].table == nil or IDX_0.standings[0].table.size == 0 -%}
+  <div class="screen"><div class="placeholder">
+    Standings haven't been set for this season yet.
+    {%- if IDX_0.season.startDate %}<br/><small>Season starts {{ IDX_0.season.startDate }}.</small>{% endif -%}
+  </div></div>
 {%- else -%}
-  {%- assign rows = IDX_0.standings[0].table | default: empty -%}
+  {%- assign rows = IDX_0.standings[0].table -%}
   {%- assign matchday = IDX_0.season.currentMatchday | default: "?" -%}
   <div class="screen">
     <div class="title-bar">

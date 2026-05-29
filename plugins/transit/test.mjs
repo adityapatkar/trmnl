@@ -35,17 +35,32 @@ test('renders the title bar with station name and refresh interval', async () =>
   assert.match(html, /refreshes/i);
 });
 
-test('shows a setup placeholder when WMATA + Fairfax responses are auth errors (missing/invalid keys)', async () => {
-  // Simulate the real TRMNL failure mode: both polling URLs returned auth-error
-  // bodies instead of the expected response shapes. (The plugin can't reliably
-  // read form-field values in the markup, so we detect the failure by inspecting
-  // IDX_n shapes — the polling URL itself succeeds whenever the keys are present.)
+test('shows a setup placeholder when WMATA + Fairfax responses are both auth errors', async () => {
   const html = await renderAll({
     predictions: 'wmata-predictions-bad-key',
     buses: 'fairfax-predictions-bad-key',
   });
   assert.match(html, /Couldn't load transit data/i);
-  assert.match(html, /Access denied/i);   // surfaces the WMATA error message
+  assert.match(html, /Access denied/i);
+});
+
+test('shows inline metro error + working bus column when WMATA only is auth-broken', async () => {
+  const html = await renderAll({ predictions: 'wmata-predictions-bad-key' });
+  assert.match(html, /col-error/);                 // inline error box rendered
+  assert.match(html, /WMATA error/i);
+  assert.match(html, /Access denied/i);
+  // Bus column still has its FFX header and at least one route number
+  assert.match(html, /Connector/i);
+  const buses = await loadFixture('fairfax-predictions');
+  assert.match(html, new RegExp(`\\b${buses['bustime-response'].prd[0].rt}\\b`));
+});
+
+test('shows inline bus error + working metro column when Fairfax only is auth-broken', async () => {
+  const html = await renderAll({ buses: 'fairfax-predictions-bad-key' });
+  assert.match(html, /col-error/);
+  assert.match(html, /Fairfax error/i);
+  // Metro column still has SV trains rendered
+  assert.match(html, /\bSV\b/);
 });
 
 test('renders LN / CAR / DEST / MIN header row for metro', async () => {

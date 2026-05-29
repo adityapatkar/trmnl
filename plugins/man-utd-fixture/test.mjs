@@ -61,6 +61,12 @@ test('shows setup placeholder when both polling responses are auth errors', asyn
   assert.match(html, /API token is invalid/i);
 });
 
+test('shows setup placeholder when SCHEDULED is auth-broken even if LIVE returned an empty array', async () => {
+  const html = await render({ next: 'bad-token', live: 'live-empty' });
+  assert.match(html, /Couldn't load fixture data/i);
+  assert.match(html, /API token is invalid/i);
+});
+
 test('shows off-season message when both fixture arrays empty', async () => {
   const html = await render({ next: 'off-season' });
   assert.match(html, /off-season|no fixture scheduled/i);

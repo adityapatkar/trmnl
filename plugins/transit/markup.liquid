@@ -3,6 +3,8 @@
 .alert-badge { font-family: var(--mono); font-size: 10px; color: var(--ink-soft); }
 .alert-line { margin: 2px 0; }
 .alert-line strong { font-weight: 800; letter-spacing: 0.05em; }
+.col-error { background: var(--bg-shade); border: 1px solid var(--ink); padding: 10px 12px; margin: 12px 0; font-size: 11px; line-height: 1.35; color: var(--ink); }
+.col-error strong { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
 </style>
 {%- comment -%}
   TRMNL exposes polling responses (IDX_0..N) reliably in the markup, but form-field
@@ -78,6 +80,13 @@
           <span style="text-align: right;">MIN</span>
         </div>
 
+        {%- if wmata_ok == nil -%}
+          <div class="col-error">
+            <strong>WMATA error</strong>
+            {%- if IDX_0.message %}<br/>{{ IDX_0.message | truncate: 200 }}{% else %}<br/>No response from WMATA — check station code &amp; API key.{% endif -%}
+          </div>
+        {%- endif -%}
+
         {%- unless first_train -%}
           <div style="padding: 24px 8px; text-align: center; color: var(--ink-soft);">No predictions right now.</div>
         {%- endunless -%}
@@ -118,6 +127,13 @@
   <span style="font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;">Connector — nearby stops</span>
 </div>
 
+{%- if fairfax_ok == nil -%}
+  <div class="col-error">
+    <strong>Fairfax error</strong><br/>
+    {%- if IDX_1.error %}{{ IDX_1.error | truncate: 200 }}{% elsif IDX_1.message %}{{ IDX_1.message | truncate: 200 }}{% else %}No response from Fairfax BusTime — check API key &amp; stop IDs.{% endif -%}
+  </div>
+{%- else -%}
+
 {%- assign bus_resp = IDX_1["bustime-response"] -%}
 
 {%- if bus_resp.error -%}
@@ -146,6 +162,8 @@
     </div>
   {%- endfor -%}
 {%- endif -%}
+
+{%- endif -%}{%- comment -%}/fairfax_ok branch{%- endcomment -%}
       </div>
     </div>
     {%- if total_alerts > 0 -%}
