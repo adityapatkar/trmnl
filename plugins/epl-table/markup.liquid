@@ -1,6 +1,6 @@
 <style>
 {% include_raw "plugins/_shared/styles.css" %}
-.pl-logo { width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--ink); color: var(--bg); border-radius: 50%; font-family: var(--sans); font-weight: 900; font-size: 14px; letter-spacing: 0.04em; }
+.pl-logo { width: 38px; height: 38px; flex-shrink: 0; object-fit: contain; filter: grayscale(100%) contrast(1.5) brightness(0.95); }
 .body-2col { flex: 1; display: grid; grid-template-columns: 1fr 1fr; padding: 4px 18px 6px; min-height: 0; }
 .col-table { padding: 4px 6px; }
 .col-table.right { border-left: 1.5px solid var(--ink); padding-left: 12px; }
@@ -49,7 +49,7 @@ table.standings tbody tr.cut-line td { border-bottom: 1.5px dashed #888; }
   {%- assign matchday = ssn.currentMatchday | default: "?" -%}
   <div class="screen">
     <div class="title-bar">
-      <div class="pl-logo" aria-label="Premier League">PL</div>
+      <img class="pl-logo" alt="Premier League" src="https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg"/>
       <div class="t-stack">
         <span class="t">Premier League</span>
         <span class="t-sub">{{ ssn.startDate | date: "%Y" }}–{{ ssn.endDate | date: "%y" }} · Matchday {{ matchday }}</span>
