@@ -175,7 +175,7 @@ api_key={{ wmata_api_key }}
 | `wmata_station_name` | WMATA station display name     | *(blank — matches the chosen station)*             |
 | `fairfax_api_key`    | Fairfax BusTime API key        | *(blank — required)*                               |
 | `fairfax_stop_ids`   | Comma-separated stop IDs       | *(blank — set during setup, 2–3 nearest stops)*    |
-| `fairfax_base_url`   | BusTime API base URL           | `http://realtime.fairfaxcounty.gov/bustime/api/v3` |
+| `fairfax_base_url`   | BusTime API base URL           | `https://www.fairfaxcounty.gov/bustime/api/v3` |
 
 The transit plugin's two metro-direction labels (e.g., "Toward Largo" and "Toward Ashburn") are not hard-coded; they're derived from the `Group` field (WMATA's "1"/"2" track identifier) and the most common `DestinationName` per group in the response, so the plugin labels itself correctly regardless of which station the user picks.
 
@@ -539,7 +539,7 @@ Visual reference: `.superpowers/brainstorm/.../content/epl-layout-v2.html`.
    - football-data.org: register at `football-data.org`, copy the X-Auth-Token from the dashboard.
 3. **Provide your lat/long** (the location the transit plugin centers on — e.g., home, office). Use it to look up:
    - The nearest WMATA station code (use `https://api.wmata.com/Rail.svc/json/jStations` with your API key, then pick the closest by lat/long math, or use the WMATA station map at `wmata.com/rider-tools/`).
-   - 2–3 nearest Fairfax Connector stop IDs (use `https://realtime.fairfaxcounty.gov/bustime/api/v3/getstops?key=<KEY>&rt=<route>&dir=<direction>&format=json`, iterating per nearby route, or use the BusTracker web UI to spot stops on a map).
+   - 2–3 nearest Fairfax Connector stop IDs (use `https://www.fairfaxcounty.gov/bustime/api/v3/getstops?key=<KEY>&rt=<route>&dir=<direction>&format=json`, iterating per nearby route, or use the BusTracker web UI to spot stops on a map).
 4. Fill those values into the transit plugin's form fields (`wmata_station_code`, `wmata_station_name`, `fairfax_stop_ids`).
 5. **Create the four plugins in TRMNL admin** in order: transit, man-utd-fixture, ucl-table, epl-table. For each:
    - Strategy = Polling.
@@ -556,7 +556,7 @@ Visual reference: `.superpowers/brainstorm/.../content/epl-layout-v2.html`.
 - **Assumption**: user has a TRMNL device + Developer Perks. If not: setup doc adds a step.
 - **Assumption**: Wikipedia commons URLs for PL / UCL / WMATA "M" logos are stable. Fallback: bundle local SVG copies in the plugin folders.
 - **Open**: user will provide actual lat/long during setup; the design intentionally doesn't bake any specific location into the plugin code. The Tysons references in earlier mockups were placeholder mock data only.
-- **Open**: Fairfax BusTime base URL — `realtime.fairfaxcounty.gov` is the documented host but BusTime endpoints sometimes redirect to https. Confirm and pin in setup.
+- **Resolved**: Fairfax BusTime base URL is `https://www.fairfaxcounty.gov/bustime/api/v3`. The `realtime.fairfaxcounty.gov` hostname referenced in earlier docs/community examples does not resolve.
 - **Verify (implementation)**: football-data.org v4 status filter syntax. Spec assumes `status=LIVE` aliases `IN_PLAY,PAUSED`. If not, fall back to two URLs.
 - **Verify (implementation)**: UCL stage enumeration strings (`LEAGUE_STAGE`, `PLAY_OFFS`, `LAST_16`, `QUARTER_FINALS`, `SEMI_FINALS`, `FINAL`). UEFA's 2024-25 reformat introduced a 24-team knockout playoff round; football-data.org's label for it needs confirmation.
 - **Verify (implementation)**: WMATA `Incidents.svc` `LinesAffected` format is the documented semicolon-trailing string (e.g., `"SV;OR;"`) — string-contains check is the assumed filter mechanism.

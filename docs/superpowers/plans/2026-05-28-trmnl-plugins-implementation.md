@@ -607,7 +607,7 @@ Create `plugins/transit/form-fields.json` (used only by the local test harness; 
   "wmata_station_name": "Tysons",
   "fairfax_api_key": "test-key-not-used-in-render",
   "fairfax_stop_ids": "1001,1002",
-  "fairfax_base_url": "http://realtime.fairfaxcounty.gov/bustime/api/v3"
+  "fairfax_base_url": "https://www.fairfaxcounty.gov/bustime/api/v3"
 }
 ```
 
@@ -636,7 +636,7 @@ Use `getstops` to find stops near Tysons (e.g., on routes 423, 462). Example for
 
 ```bash
 FFX_KEY="<your-key>"
-curl -s "http://realtime.fairfaxcounty.gov/bustime/api/v3/getstops?key=$FFX_KEY&rt=423&dir=INBOUND&format=json"
+curl -s "https://www.fairfaxcounty.gov/bustime/api/v3/getstops?key=$FFX_KEY&rt=423&dir=INBOUND&format=json"
 ```
 
 Pick 2 stop IDs near Tysons Corner. Note them (e.g., `1001,1002`). Update `plugins/transit/form-fields.json` to use the real IDs.
@@ -644,7 +644,7 @@ Pick 2 stop IDs near Tysons Corner. Note them (e.g., `1001,1002`). Update `plugi
 - [ ] **Step 3: Capture the live predictions response**
 
 ```bash
-curl -s "http://realtime.fairfaxcounty.gov/bustime/api/v3/getpredictions?key=$FFX_KEY&stpid=1001,1002&format=json" \
+curl -s "https://www.fairfaxcounty.gov/bustime/api/v3/getpredictions?key=$FFX_KEY&stpid=1001,1002&format=json" \
   > plugins/transit/samples/fairfax-predictions.json
 ```
 
@@ -717,7 +717,7 @@ Create `plugins/transit/samples/wmata-incidents-empty.json`:
 - [ ] **Step 3: Capture Fairfax bulletins**
 
 ```bash
-curl -s "http://realtime.fairfaxcounty.gov/bustime/api/v3/getservicebulletins?key=$FFX_KEY&stpid=1001,1002&format=json" \
+curl -s "https://www.fairfaxcounty.gov/bustime/api/v3/getservicebulletins?key=$FFX_KEY&stpid=1001,1002&format=json" \
   > plugins/transit/samples/fairfax-bulletins.json
 ```
 
@@ -1342,7 +1342,7 @@ WMATA next-trains + Fairfax Connector next-buses + service alerts, on a single 8
    | `wmata_station_name` | WMATA station display name     | yes      | `Tysons`                                           |
    | `fairfax_api_key`    | Fairfax BusTime API key        | yes      | (from fairfaxcounty.gov)                           |
    | `fairfax_stop_ids`   | Comma-separated stop IDs       | yes      | `1001,1002`                                        |
-   | `fairfax_base_url`   | BusTime API base URL           | yes      | `http://realtime.fairfaxcounty.gov/bustime/api/v3` |
+   | `fairfax_base_url`   | BusTime API base URL           | yes      | `https://www.fairfaxcounty.gov/bustime/api/v3` |
 
 5. **Refresh interval**: 5 minutes.
 
@@ -2742,9 +2742,9 @@ Compute distance to each station's `Lat`/`Lon`; pick the closest. Record the `Co
 The simplest approach is the BusTracker web UI at https://www.fairfaxcounty.gov/bustime/home.jsp — drop a pin near your location and read off the stop IDs. Or use the API:
 ```bash
 FFX_KEY="<your-key>"
-curl -s "http://realtime.fairfaxcounty.gov/bustime/api/v3/getroutes?key=$FFX_KEY&format=json"
+curl -s "https://www.fairfaxcounty.gov/bustime/api/v3/getroutes?key=$FFX_KEY&format=json"
 # Pick a route number that serves your area, then:
-curl -s "http://realtime.fairfaxcounty.gov/bustime/api/v3/getstops?key=$FFX_KEY&rt=<RT>&dir=INBOUND&format=json"
+curl -s "https://www.fairfaxcounty.gov/bustime/api/v3/getstops?key=$FFX_KEY&rt=<RT>&dir=INBOUND&format=json"
 # Look for stops whose lat/lng are near yours
 ```
 Pick 2–3 nearby stops. Record their IDs (e.g., `1001,1002`).
