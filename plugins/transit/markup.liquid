@@ -5,54 +5,6 @@
 .alert-line strong { font-weight: 800; letter-spacing: 0.05em; }
 .col-error { background: var(--bg-shade); border: 1px solid var(--ink); padding: 10px 12px; margin: 12px 0; font-size: 11px; line-height: 1.35; color: var(--ink); }
 .col-error strong { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-
-/* Line-code circle for WMATA trains (SV/OR/RD/BL/GR/YL) */
-.lncode {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background: var(--ink);
-  color: var(--bg);
-  border-radius: 50%;
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0;
-  margin: 0 auto;
-}
-/* Bus route circle (mirrors line-code style) */
-.rt-circle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: var(--ink);
-  color: var(--bg);
-  border-radius: 50%;
-  font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0;
-  margin: 0 auto;
-}
-/* Fairfax Connector badge — circular for visual consistency with route circles */
-.ffx-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: var(--ink);
-  color: var(--bg);
-  border-radius: 50%;
-  font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-}
 </style>
 {%- comment -%}
   TRMNL exposes polling responses (IDX_0..N) reliably in the markup, but form-field
@@ -156,7 +108,7 @@
               </div>
               {%- for t in rows limit: 4 -%}
                 <div style="display: grid; grid-template-columns: 34px 40px 1fr 50px; gap: 6px; padding: 5px 8px; border-bottom: 1px solid var(--rule-soft); font-family: var(--mono); font-size: 15px; font-weight: 700; align-items: center; line-height: 1;">
-                  <span class="lncode">{{ t.Line }}</span>
+                  <span style="background: var(--ink); color: var(--bg); text-align: center; padding: 3px 0; font-size: 11px; font-weight: 900; letter-spacing: 0.06em; border-radius: 2px;">{{ t.Line }}</span>
                   <span style="text-align: center; font-weight: 800;">{{ t.Car | default: "-" }}</span>
                   <span style="text-transform: uppercase;">{{ t.DestinationName }}</span>
                   <span style="text-align: right; font-weight: 800;">
@@ -171,7 +123,7 @@
 
       <div style="padding: 12px 18px; border-left: 2px solid var(--ink);">
         <div style="display: flex; align-items: baseline; gap: 8px; border-bottom: 3px solid var(--ink); padding-bottom: 4px; margin-bottom: 6px;">
-  <span class="ffx-badge">FFX</span>
+  <span style="background: var(--ink); color: var(--bg); font-weight: 900; font-size: 11px; padding: 3px 7px; letter-spacing: 0.1em; border-radius: 2px;">FFX</span>
   <span style="font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;">Connector — nearby stops</span>
 </div>
 
@@ -200,7 +152,7 @@
       </div>
       {%- for p in rows limit: 4 -%}
         <div style="display: grid; grid-template-columns: 44px 1fr 50px; gap: 8px; padding: 5px 8px; border-bottom: 1px solid var(--rule-soft); align-items: center; font-family: var(--mono); font-size: 13px; font-weight: 700; line-height: 1;">
-          <span class="rt-circle">{{ p.rt }}</span>
+          <span style="background: var(--ink); color: var(--bg); text-align: center; padding: 3px 0; font-size: 11px; font-weight: 900; letter-spacing: 0.04em; border-radius: 2px;">{{ p.rt }}</span>
           <span style="text-transform: uppercase; font-size: 12px;">{{ p.des }}</span>
           <span style="text-align: right; font-weight: 800;">
             {%- if p.prdctdn == "DUE" -%}DUE{%- else -%}{{ p.prdctdn }}{%- endif -%}
