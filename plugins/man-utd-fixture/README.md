@@ -15,11 +15,13 @@ Single match focus — shows next scheduled fixture; auto-switches to a live sco
    ```
    X-Auth-Token={{ football_data_api_key }}
    ```
-4. **Form fields**:
+4. **Form fields**: paste the contents of [`form-fields.yaml`](form-fields.yaml) into the plugin's Form Fields section in TRMNL admin. It defines one field:
 
-   | key                     | label                       | required |
-   |-------------------------|-----------------------------|----------|
-   | `football_data_api_key` | football-data.org API key   | yes      |
+   | keyname                 | type     | required | notes                                |
+   |-------------------------|----------|----------|--------------------------------------|
+   | `football_data_api_key` | password | yes      | from football-data.org/client/register |
+
+   `form-fields.json` is a separate file with a placeholder value for the local test harness only — do not paste it into TRMNL admin.
 
 5. **Refresh interval**: 5 minutes (so live scores stay current during matches).
 

@@ -16,16 +16,20 @@ WMATA next-trains + Fairfax Connector next-buses + service alerts, on a single 8
    ```
    api_key={{ wmata_api_key }}
    ```
-4. **Form fields**:
+4. **Form fields**: paste the contents of [`form-fields.yaml`](form-fields.yaml) into the plugin's Form Fields section in TRMNL admin (or import it via the [visual form builder](https://usetrmnl.github.io/trmnl-form-builder/)). It defines six fields:
 
-   | key                  | label                          | required | example                                            |
-   |----------------------|--------------------------------|----------|----------------------------------------------------|
-   | `wmata_api_key`      | WMATA API key                  | yes      | (from developer.wmata.com)                         |
-   | `wmata_station_code` | WMATA station code             | yes      | `N02`                                              |
-   | `wmata_station_name` | WMATA station display name     | yes      | `Tysons`                                           |
-   | `fairfax_api_key`    | Fairfax BusTime API key        | yes      | (from fairfaxcounty.gov)                           |
-   | `fairfax_stop_ids`   | Comma-separated stop IDs       | yes      | `6307,6360`                                        |
-   | `fairfax_base_url`   | BusTime API base URL           | yes      | `https://www.fairfaxcounty.gov/bustime/api/v3`     |
+   | keyname              | type     | required | notes                                              |
+   |----------------------|----------|----------|----------------------------------------------------|
+   | `wmata_api_key`      | password | yes      | from developer.wmata.com                           |
+   | `wmata_station_code` | string   | yes      | default `N02` (Tysons)                             |
+   | `wmata_station_name` | string   | yes      | default `Tysons`                                   |
+   | `fairfax_api_key`    | password | yes      | from fairfaxcounty.gov                             |
+   | `fairfax_stop_ids`   | string   | yes      | comma-separated IDs, e.g. `6307,6360`              |
+   | `fairfax_base_url`   | url      | yes      | default `https://www.fairfaxcounty.gov/bustime/api/v3` |
+
+   See [`form-fields.yaml`](form-fields.yaml) for the descriptions/help text that surface in the TRMNL admin UI.
+
+   `form-fields.json` is a separate file with placeholder values used by the local test harness only — do not paste it into TRMNL admin.
 
 5. **Refresh interval**: 5 minutes.
 
