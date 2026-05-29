@@ -1921,7 +1921,7 @@ curl -s -H "X-Auth-Token: $FD_TOKEN" \
   > plugins/ucl-table/samples/standings-league-phase.json
 ```
 
-Inspect. Expect `{ "standings": [ { "stage": "LEAGUE_STAGE", "type": "TOTAL", "group": null, "table": [ ... ] } ], "season": {...}, "competition": {...} }`.
+Inspect. Expect `{ "standings": [ { "stage": "GROUP_STAGE", "type": "TOTAL", "group": null, "table": [ ... ] } ], "season": {...}, "competition": {...} }`.
 
 If the response shows a knockout stage instead (depending on time of year), save the file but **also** synthesize a league-phase version by copying any prior season's structure with the league-phase teams.
 

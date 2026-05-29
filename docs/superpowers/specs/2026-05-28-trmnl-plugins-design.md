@@ -363,7 +363,7 @@ Two-mode plugin: league-phase table during the autumn league rounds; knockout br
 
 ```
 https://api.football-data.org/v4/competitions/CL/standings
-https://api.football-data.org/v4/competitions/CL/matches?stage=PLAY_OFFS,LAST_16,QUARTER_FINALS,SEMI_FINALS,FINAL
+https://api.football-data.org/v4/competitions/CL/matches?stage=LAST_16,QUARTER_FINALS,SEMI_FINALS,FINAL
 ```
 
 URL 1 returns standings (table during league phase; bracket-shaped data afterward). URL 2 returns knockout-round matches (empty during league phase).
@@ -385,7 +385,7 @@ X-Auth-Token={{ football_data_api_key }}
 
 ### Data shape
 
-- `IDX_0.standings[0].stage` — `"LEAGUE_STAGE"` during league phase; later changes (e.g., `"ROUND_OF_16"`, `"FINAL"`) to reflect the current knockout stage.
+- `IDX_0.standings[0].stage` — `"GROUP_STAGE"` during league phase; later changes (e.g., `"ROUND_OF_16"`, `"FINAL"`) to reflect the current knockout stage.
 - `IDX_0.standings[0].table[]` — rows during league phase: `position`, `team` (`id`, `shortName`, `tla`, `crest`), `playedGames`, `won`, `draw`, `lost`, `goalsFor`, `goalsAgainst`, `goalDifference`, `points`, `form`.
 - `IDX_1.matches[]` — knockout matches when applicable: `id`, `stage` (`"PLAY_OFFS"`, `"LAST_16"`, …), `status` (`"SCHEDULED"`, `"IN_PLAY"`, `"FINISHED"`, etc.), `utcDate`, `homeTeam.{tla,crest}`, `awayTeam.{tla,crest}`, `score.fullTime.{home,away}`, plus `aggregateScore` or similar across legs (the v4 API exposes ties as separate match objects per leg — we sum/match them in Liquid).
 
@@ -558,7 +558,7 @@ Visual reference: `.superpowers/brainstorm/.../content/epl-layout-v2.html`.
 - **Open**: user will provide actual lat/long during setup; the design intentionally doesn't bake any specific location into the plugin code. The Tysons references in earlier mockups were placeholder mock data only.
 - **Resolved**: Fairfax BusTime base URL is `https://www.fairfaxcounty.gov/bustime/api/v3`. The `realtime.fairfaxcounty.gov` hostname referenced in earlier docs/community examples does not resolve.
 - **Verify (implementation)**: football-data.org v4 status filter syntax. Spec assumes `status=LIVE` aliases `IN_PLAY,PAUSED`. If not, fall back to two URLs.
-- **Verify (implementation)**: UCL stage enumeration strings (`LEAGUE_STAGE`, `PLAY_OFFS`, `LAST_16`, `QUARTER_FINALS`, `SEMI_FINALS`, `FINAL`). UEFA's 2024-25 reformat introduced a 24-team knockout playoff round; football-data.org's label for it needs confirmation.
+- **Verify (implementation)**: UCL stage enumeration strings (`GROUP_STAGE`, `PLAY_OFFS`, `LAST_16`, `QUARTER_FINALS`, `SEMI_FINALS`, `FINAL`). UEFA's 2024-25 reformat introduced a 24-team knockout playoff round; football-data.org's label for it needs confirmation.
 - **Verify (implementation)**: WMATA `Incidents.svc` `LinesAffected` format is the documented semicolon-trailing string (e.g., `"SV;OR;"`) — string-contains check is the assumed filter mechanism.
 - **Resolved**: Fairfax `getservicebulletins` uses abbreviated field names (`sb`, `nm`, `sbj`, `brf`, `dtl`, `prty`, `srvc`) — confirmed against the live API. Spec and templates updated to match.
 
