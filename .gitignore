@@ -21,3 +21,4 @@ plugins/*/plugin-export.json
 
 # Local preview files
 plugins/*/preview.html
+plugins/*/preview-*.html

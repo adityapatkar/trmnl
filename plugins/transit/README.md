@@ -7,10 +7,10 @@ WMATA next-trains + Fairfax Connector next-buses + service alerts, on a single 8
 1. **Plugins → New private plugin → Polling strategy.**
 2. **Polling URLs** (paste, line-separated):
    ```
-   https://api.wmata.com/StationPrediction.svc/json/GetPrediction/{{ wmata_station_code }}
-   {{ fairfax_base_url }}/getpredictions?key={{ fairfax_api_key }}&stpid={{ fairfax_stop_ids }}&format=json
-   https://api.wmata.com/Incidents.svc/json/Incidents
-   {{ fairfax_base_url }}/getservicebulletins?key={{ fairfax_api_key }}&stpid={{ fairfax_stop_ids }}&format=json
+https://api.wmata.com/StationPrediction.svc/json/GetPrediction/{{ wmata_station_code }}
+{{ fairfax_base_url }}/getpredictions?key={{ fairfax_api_key }}&stpid={{ fairfax_stop_ids }}&format=json
+https://api.wmata.com/Incidents.svc/json/Incidents
+{{ fairfax_base_url }}/getservicebulletins?key={{ fairfax_api_key }}&stpid={{ fairfax_stop_ids }}&format=json
    ```
 3. **Headers**:
    ```

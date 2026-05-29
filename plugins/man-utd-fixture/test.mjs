@@ -55,9 +55,10 @@ test('shows HOME / AWAY label based on home team id', async () => {
   assert.match(html, new RegExp(expected));
 });
 
-test('shows setup placeholder when football_data_api_key is blank', async () => {
-  const html = await render({ form: { football_data_api_key: '' } });
-  assert.match(html, /add your football-data\.org API key/i);
+test('shows setup placeholder when both polling responses are auth errors', async () => {
+  const html = await render({ next: 'bad-token', live: 'bad-token' });
+  assert.match(html, /Couldn't load fixture data/i);
+  assert.match(html, /API token is invalid/i);
 });
 
 test('shows off-season message when both fixture arrays empty', async () => {

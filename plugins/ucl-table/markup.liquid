@@ -29,8 +29,16 @@ table.standings tbody tr.cut-line td { border-bottom: 1.5px dashed #888; }
 .tie.highlight .stat { color: var(--bg); opacity: 0.85; }
 </style>
 
-{%- if football_data_api_key == blank -%}
-  <div class="screen"><div class="placeholder setup">Add your football-data.org API key in plugin settings.</div></div>
+{%- comment -%}
+  Shape-based "missing API key" detection — see transit plugin for rationale.
+  football-data.org returns {standings:[...]} or {matches:[...]} on success; on
+  bad token returns {message:"..."} with no array.
+{%- endcomment -%}
+{%- if IDX_0.standings == nil and IDX_1.matches == nil -%}
+  <div class="screen"><div class="placeholder setup">
+    Couldn't load Champions League data. Check your football-data.org API key.
+    {% if IDX_0.message %}<br/><br/><small>{{ IDX_0.message }}</small>{% endif %}
+  </div></div>
 {%- elsif IDX_1.matches and IDX_1.matches.size > 0 -%}
   {%- assign all_matches = IDX_1.matches -%}
   {%- assign stages = "LAST_16,QUARTER_FINALS,SEMI_FINALS,FINAL" | split: "," -%}

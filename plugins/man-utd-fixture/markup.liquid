@@ -20,9 +20,18 @@
 .live-pill { display: inline-block; padding: 2px 8px; background: var(--ink); color: var(--bg); font-size: 10px; font-weight: 900; letter-spacing: 0.18em; border-radius: 2px; }
 </style>
 
-{%- if football_data_api_key == blank -%}
+{%- comment -%}
+  Detect missing/invalid API key by response shape: football-data.org returns
+  {matches:[...]} on success and {message: "..."} on auth failure. TRMNL doesn't
+  reliably expose form-field values in markup (only in polling URL), so we infer
+  failure from IDX_0/IDX_1 shapes rather than checking the form field directly.
+{%- endcomment -%}
+{%- if IDX_0.matches == nil and IDX_1.matches == nil -%}
   <div class="screen">
-    <div class="placeholder setup">Add your football-data.org API key in plugin settings.</div>
+    <div class="placeholder setup">
+      Couldn't load fixture data. Check your football-data.org API key in plugin settings.
+      {% if IDX_0.message %}<br/><br/><small>{{ IDX_0.message }}</small>{% endif %}
+    </div>
   </div>
 {%- elsif IDX_1.matches and IDX_1.matches.size > 0 -%}
   {%- assign live = IDX_1.matches[0] -%}

@@ -35,9 +35,17 @@ test('renders the title bar with station name and refresh interval', async () =>
   assert.match(html, /refreshes/i);
 });
 
-test('shows a setup placeholder when WMATA API key is blank', async () => {
-  const html = await renderAll({ form: { wmata_api_key: '' } });
-  assert.match(html, /add your WMATA API key/i);
+test('shows a setup placeholder when WMATA + Fairfax responses are auth errors (missing/invalid keys)', async () => {
+  // Simulate the real TRMNL failure mode: both polling URLs returned auth-error
+  // bodies instead of the expected response shapes. (The plugin can't reliably
+  // read form-field values in the markup, so we detect the failure by inspecting
+  // IDX_n shapes — the polling URL itself succeeds whenever the keys are present.)
+  const html = await renderAll({
+    predictions: 'wmata-predictions-bad-key',
+    buses: 'fairfax-predictions-bad-key',
+  });
+  assert.match(html, /Couldn't load transit data/i);
+  assert.match(html, /Access denied/i);   // surfaces the WMATA error message
 });
 
 test('renders LN / CAR / DEST / MIN header row for metro', async () => {

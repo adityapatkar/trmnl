@@ -22,8 +22,14 @@ table.standings tbody tr.cut-line td { border-bottom: 1.5px dashed #888; }
 .legend .swatch.grey { background: #999; }
 </style>
 
-{%- if football_data_api_key == blank -%}
-  <div class="screen"><div class="placeholder setup">Add your football-data.org API key in plugin settings.</div></div>
+{%- comment -%}
+  Shape-based "missing API key" detection (see transit plugin for rationale).
+{%- endcomment -%}
+{%- if IDX_0.standings == nil -%}
+  <div class="screen"><div class="placeholder setup">
+    Couldn't load Premier League data. Check your football-data.org API key.
+    {% if IDX_0.message %}<br/><br/><small>{{ IDX_0.message }}</small>{% endif %}
+  </div></div>
 {%- else -%}
   {%- assign rows = IDX_0.standings[0].table | default: empty -%}
   {%- assign matchday = IDX_0.season.currentMatchday | default: "?" -%}

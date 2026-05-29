@@ -44,9 +44,10 @@ test('shows R16 cut line after row 8 in left column', async () => {
   assert.match(html, /cut-line/);
 });
 
-test('falls back to setup placeholder when API key blank', async () => {
-  const html = await render({ form: { football_data_api_key: '' } });
-  assert.match(html, /add your football-data\.org API key/i);
+test('falls back to setup placeholder when both polling responses are auth errors', async () => {
+  const html = await render({ standings: 'bad-token', knockout: 'bad-token' });
+  assert.match(html, /Couldn't load Champions League data/i);
+  assert.match(html, /API token is invalid/i);
 });
 
 test('switches to bracket view when knockout matches are present', async () => {

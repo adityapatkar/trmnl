@@ -4,10 +4,20 @@
 .alert-line { margin: 2px 0; }
 .alert-line strong { font-weight: 800; letter-spacing: 0.05em; }
 </style>
-{% if wmata_api_key == blank or fairfax_api_key == blank %}
+{%- comment -%}
+  TRMNL exposes polling responses (IDX_0..N) reliably in the markup, but form-field
+  values (e.g. wmata_api_key) are not always exposed here even when they were used
+  successfully in the polling URL. So we detect "missing/invalid API key" via the
+  shape of the responses: WMATA returns {"Trains": [...]} on success; on a bad key
+  it returns {"message": "..."} with no Trains array. Same idea for Fairfax.
+{%- endcomment -%}
+{%- assign wmata_ok = IDX_0.Trains -%}
+{%- assign fairfax_ok = IDX_1["bustime-response"] -%}
+{% if wmata_ok == nil and fairfax_ok == nil %}
   <div class="screen">
     <div class="placeholder setup">
-      Add your WMATA API key and Fairfax Connector API key in plugin settings to see transit predictions.
+      Couldn't load transit data. Check your WMATA and Fairfax Connector API keys in plugin settings, then click Force Refresh.
+      {% if IDX_0.message %}<br/><br/><small>WMATA: {{ IDX_0.message }}</small>{% endif %}
     </div>
   </div>
 {% else %}
