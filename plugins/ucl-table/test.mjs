@@ -48,3 +48,30 @@ test('falls back to setup placeholder when API key blank', async () => {
   const html = await render({ form: { football_data_api_key: '' } });
   assert.match(html, /add your football-data\.org API key/i);
 });
+
+test('switches to bracket view when knockout matches are present', async () => {
+  const html = await render({ knockout: 'knockout-matches' });
+  assert.match(html, /ROUND OF 16/i);
+  assert.match(html, /QUARTER-?FINALS/i);
+});
+
+test('renders ties with TLA pairs and aggregate scores', async () => {
+  const html = await render({ knockout: 'knockout-matches' });
+  // Pull two known TLAs from the fixture to confirm they appear
+  const matches = (await loadFixture('knockout-matches')).matches;
+  const sampleTla = matches[0].homeTeam.tla;
+  assert.match(html, new RegExp(`\\b${sampleTla}\\b`));
+  // Aggregate scores render as "X – Y" with em or en dash
+  assert.ok(/[0-9]\s*[–—-]\s*[0-9]/.test(html));
+});
+
+test('highlights a tie involving the highlight team', async () => {
+  const html = await render({ knockout: 'knockout-matches' });
+  // Arsenal (id 57) is the highlight team in form-fields.json AND is in the 2025-26 UCL final
+  assert.match(html, /class="tie[^"]*highlight/);
+});
+
+test('shows a stage status marker (FT / L1 / LIVE / SCHED) for each tie', async () => {
+  const html = await render({ knockout: 'knockout-matches' });
+  assert.match(html, /\b(FT|L1|LIVE|SCHED)\b/);
+});

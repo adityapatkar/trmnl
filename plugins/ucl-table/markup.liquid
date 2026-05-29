@@ -32,7 +32,91 @@ table.standings tbody tr.cut-line td { border-bottom: 1.5px dashed #888; }
 {%- if football_data_api_key == blank -%}
   <div class="screen"><div class="placeholder setup">Add your football-data.org API key in plugin settings.</div></div>
 {%- elsif IDX_1.matches and IDX_1.matches.size > 0 -%}
-  <div class="screen"><div class="placeholder">Bracket view rendered in Task 3.3.</div></div>
+  {%- assign all_matches = IDX_1.matches -%}
+  {%- assign stages = "LAST_16,QUARTER_FINALS,SEMI_FINALS,FINAL" | split: "," -%}
+  {%- assign stage_labels = "Round of 16,Quarter-Finals,Semi-Finals,Final" | split: "," -%}
+
+  <div class="screen">
+    <div class="title-bar">
+      <img class="ucl-logo" alt="UEFA Champions League" src="https://upload.wikimedia.org/wikipedia/en/d/d5/UEFA_Champions_League.svg"/>
+      <div class="t-stack">
+        <span class="t">UEFA Champions League</span>
+        <span class="t-sub">Knockout phase</span>
+      </div>
+      <div class="meta">{{ now | date: "%H:%M" }}<br/><span style="opacity:0.6">refreshes 60m</span></div>
+    </div>
+    <div class="bracket-grid">
+      {%- for idx in (0..3) -%}
+        {%- assign st = stages[idx] -%}
+        {%- assign label = stage_labels[idx] -%}
+        {%- assign stage_matches = all_matches | where: "stage", st -%}
+        <div class="bracket-col">
+          <h4>{{ label }}</h4>
+          {%- assign seen_pairs = "" -%}
+          {%- for m in stage_matches -%}
+            {%- assign id_a = m.homeTeam.id -%}
+            {%- assign id_b = m.awayTeam.id -%}
+            {%- assign min_id = id_a | at_most: id_b -%}
+            {%- assign max_id = id_a | at_least: id_b -%}
+            {%- assign pair_key = min_id | append: "-" | append: max_id -%}
+            {%- unless seen_pairs contains pair_key -%}
+              {%- assign seen_pairs = seen_pairs | append: pair_key | append: "," -%}
+
+              {%- comment -%}Build a list of legs (both home/away orientations) by filtering stage_matches{%- endcomment -%}
+              {%- assign agg_min = 0 -%}{%- assign agg_max = 0 -%}{%- assign legs_done = 0 -%}{%- assign any_live = false -%}
+              {%- assign total_legs_count = 0 -%}
+              {%- assign min_tla = "" -%}{%- assign max_tla = "" -%}
+
+              {%- for lm in stage_matches -%}
+                {%- assign is_match = false -%}
+                {%- if lm.homeTeam.id == id_a and lm.awayTeam.id == id_b -%}{%- assign is_match = true -%}{%- endif -%}
+                {%- if lm.homeTeam.id == id_b and lm.awayTeam.id == id_a -%}{%- assign is_match = true -%}{%- endif -%}
+                {%- if is_match -%}
+                  {%- assign total_legs_count = total_legs_count | plus: 1 -%}
+                  {%- if lm.score.fullTime.home != nil -%}
+                    {%- if lm.homeTeam.id == min_id -%}
+                      {%- assign agg_min = agg_min | plus: lm.score.fullTime.home -%}
+                      {%- assign agg_max = agg_max | plus: lm.score.fullTime.away -%}
+                    {%- else -%}
+                      {%- assign agg_max = agg_max | plus: lm.score.fullTime.home -%}
+                      {%- assign agg_min = agg_min | plus: lm.score.fullTime.away -%}
+                    {%- endif -%}
+                    {%- assign legs_done = legs_done | plus: 1 -%}
+                  {%- endif -%}
+                  {%- if lm.status == "IN_PLAY" or lm.status == "PAUSED" -%}{%- assign any_live = true -%}{%- endif -%}
+                  {%- comment -%}Capture TLAs (from any leg){%- endcomment -%}
+                  {%- if lm.homeTeam.id == min_id -%}
+                    {%- assign min_tla = lm.homeTeam.tla -%}
+                    {%- assign max_tla = lm.awayTeam.tla -%}
+                  {%- else -%}
+                    {%- assign min_tla = lm.awayTeam.tla -%}
+                    {%- assign max_tla = lm.homeTeam.tla -%}
+                  {%- endif -%}
+                {%- endif -%}
+              {%- endfor -%}
+
+              {%- assign stat = "SCHED" -%}
+              {%- if any_live -%}{%- assign stat = "LIVE" -%}
+              {%- elsif legs_done == total_legs_count and legs_done > 0 -%}{%- assign stat = "FT" -%}
+              {%- elsif legs_done > 0 -%}{%- assign stat = "L" | append: legs_done -%}{%- endif -%}
+
+              {%- assign is_highlight = false -%}
+              {%- if min_id == highlight_team_id or max_id == highlight_team_id -%}{%- assign is_highlight = true -%}{%- endif -%}
+
+              <div class="tie{% if is_highlight %} highlight{% endif %}">
+                <span class="matchup">
+                  {{ min_tla }}
+                  {%- if legs_done > 0 %} {{ agg_min }} – {{ agg_max }} {% else %} vs {% endif -%}
+                  {{ max_tla }}
+                </span>
+                <span class="stat">{{ stat }}</span>
+              </div>
+            {%- endunless -%}
+          {%- endfor -%}
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
 {%- else -%}
   {%- assign rows = IDX_0.standings[0].table | default: empty -%}
   {%- if rows == empty -%}
