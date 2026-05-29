@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
 import { renderTemplate } from '../../tools/render-lib.mjs';
 
 async function loadFixture(name) {
@@ -15,16 +16,33 @@ async function loadTemplate() {
   return readFile(new URL('./markup.liquid', import.meta.url), 'utf8');
 }
 
+// Apply the same transform that runs in TRMNL's Sandbox Runtime, so the markup
+// tests see the same shape the device sees (with display_name stamped on each
+// filtered station, IDX_4 reduced to just the configured stations, etc.).
+const transformSrc = await readFile(new URL('./transform.js', import.meta.url), 'utf8');
+const transformCtx = vm.createContext({});
+vm.runInContext(transformSrc, transformCtx);
+const transform = transformCtx.transform;
+
 async function renderAll({ predictions = 'wmata-predictions', buses = 'fairfax-predictions', incidents = 'wmata-incidents-empty', bulletins = 'fairfax-bulletins-empty', cabi = 'cabi-status', form, now } = {}) {
+  const formFields = { ...(await loadForm()), ...form };
+  const rawIdx = [
+    await loadFixture(predictions),
+    await loadFixture(buses),
+    await loadFixture(incidents),
+    await loadFixture(bulletins),
+    await loadFixture(cabi),
+  ];
+  // Simulate the production pipeline: raw polling responses go through the
+  // transform first, then their output replaces the IDX_n merge variables.
+  const transformInput = {
+    IDX_0: rawIdx[0], IDX_1: rawIdx[1], IDX_2: rawIdx[2], IDX_3: rawIdx[3], IDX_4: rawIdx[4],
+    trmnl: { plugin_settings: { custom_fields_values: formFields } },
+  };
+  const transformed = transform(transformInput);
   return renderTemplate(await loadTemplate(), {
-    formFields: { ...(await loadForm()), ...form },
-    idxResponses: [
-      await loadFixture(predictions),
-      await loadFixture(buses),
-      await loadFixture(incidents),
-      await loadFixture(bulletins),
-      await loadFixture(cabi),
-    ],
+    formFields,
+    idxResponses: [transformed.IDX_0, transformed.IDX_1, transformed.IDX_2, transformed.IDX_3, transformed.IDX_4],
     now,
   });
 }
@@ -171,9 +189,13 @@ test('hides Capital Bikeshare row when cabi_station_ids is blank', async () => {
   assert.doesNotMatch(html, /class="cabi-title"/);
 });
 
-test('hides Capital Bikeshare row when GBFS response has no stations', async () => {
+test('renders Capital Bikeshare row with "station offline" when GBFS response has no stations matching configured IDs', async () => {
+  // GBFS feed is empty but stations are configured → transform stubs each one
+  // as _offline so the markup tells the user something is wrong rather than
+  // silently hiding the row.
   const html = await renderAll({ cabi: 'cabi-status-empty' });
-  assert.doesNotMatch(html, /class="cabi-row"/);
+  assert.match(html, /class="cabi-row"/);
+  assert.match(html, /station offline/i);
 });
 
 test('shows "station offline" for a configured station missing from the GBFS response', async () => {

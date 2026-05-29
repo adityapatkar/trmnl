@@ -32,9 +32,9 @@ async function makeInput({ cabiIds = '0826359a-1f3f-11e7-bf6b-3863bb334450,08263
 test('filters IDX_4 stations to the configured cabi_station_ids', async () => {
   const out = transform(await makeInput());
   assert.equal(out.IDX_4.data.stations.length, 2);
-  const ids = out.IDX_4.data.stations.map(s => s.station_id);
-  assert.ok(ids.includes('0826359a-1f3f-11e7-bf6b-3863bb334450'));
-  assert.ok(ids.includes('08263601-1f3f-11e7-bf6b-3863bb334450'));
+  const ids = new Set(out.IDX_4.data.stations.map(s => s.station_id));
+  assert.ok(ids.has('0826359a-1f3f-11e7-bf6b-3863bb334450'));
+  assert.ok(ids.has('08263601-1f3f-11e7-bf6b-3863bb334450'));
 });
 
 test('passes IDX_0..IDX_3 through untouched', async () => {
@@ -68,15 +68,34 @@ test('preserves last_updated and ttl from the original GBFS response', async () 
 });
 
 test('handles missing IDX_4 gracefully (e.g. polling URL not yet configured)', async () => {
+  // Configured stations exist but IDX_4 didn't arrive → each station gets an
+  // _offline stub so the markup shows "station offline" rather than silently hiding.
   const input = await makeInput();
   delete input.IDX_4;
   const out = transform(input);
-  assert.equal(out.IDX_4.data.stations.length, 0);
+  assert.equal(out.IDX_4.data.stations.length, 2);
+  assert.ok(out.IDX_4.data.stations.every(s => s._offline === true));
 });
 
-test('handles missing trmnl.plugin_settings gracefully', async () => {
+test('handles missing trmnl.plugin_settings gracefully (no configured stations)', async () => {
+  // No form fields → no configured IDs → no stations rendered (row hides).
   const input = await makeInput();
   delete input.trmnl;
   const out = transform(input);
   assert.equal(out.IDX_4.data.stations.length, 0);
+});
+
+test('stamps display_name from cabi_station_names onto each filtered station', async () => {
+  const input = await makeInput();
+  input.trmnl.plugin_settings.custom_fields_values.cabi_station_names = 'South Dock,North Dock';
+  const out = transform(input);
+  assert.equal(out.IDX_4.data.stations[0].display_name, 'South Dock');
+  assert.equal(out.IDX_4.data.stations[1].display_name, 'North Dock');
+});
+
+test('uses station_id as display_name when cabi_station_names is blank', async () => {
+  const input = await makeInput();
+  input.trmnl.plugin_settings.custom_fields_values.cabi_station_names = '';
+  const out = transform(input);
+  assert.equal(out.IDX_4.data.stations[0].display_name, out.IDX_4.data.stations[0].station_id);
 });

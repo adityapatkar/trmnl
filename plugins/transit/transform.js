@@ -15,16 +15,35 @@
 function transform(input) {
   const settings = (input && input.trmnl && input.trmnl.plugin_settings) || {};
   const fields = settings.custom_fields_values || {};
+
   const idsCsv = (fields.cabi_station_ids || '').trim();
   const ids = idsCsv ? idsCsv.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+  const namesCsv = (fields.cabi_station_names || '').trim();
+  const names = namesCsv ? namesCsv.split(',').map(s => s.trim()) : [];
+
+  // Build an id → display_name map. The transform is the only place we can
+  // reliably read form-field values; the markup can't. So we stamp each
+  // station with display_name here, and the markup iterates IDX_4.data.stations
+  // directly (no form-field access needed).
+  const idNameMap = {};
+  ids.forEach((id, i) => { idNameMap[id] = (names[i] && names[i].length > 0) ? names[i] : id; });
 
   const allStations =
     (input && input.IDX_4 && input.IDX_4.data && input.IDX_4.data.stations) || [];
 
-  const filtered =
-    ids.length > 0
-      ? allStations.filter(s => ids.includes(s.station_id))
-      : [];
+  const filtered = ids.length > 0
+    ? ids
+        .map(id => {
+          const s = allStations.find(st => st.station_id === id);
+          if (!s) {
+            // Station configured but missing from feed → return a stub the markup
+            // can render as "station offline"
+            return { station_id: id, display_name: idNameMap[id], _offline: true };
+          }
+          return Object.assign({}, s, { display_name: idNameMap[id] });
+        })
+    : [];
 
   return {
     IDX_0: input.IDX_0,
