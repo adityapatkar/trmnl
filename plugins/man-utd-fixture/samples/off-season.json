@@ -1,0 +1,14 @@
+{
+  "filters": {
+    "competitions": "PL",
+    "permission": "TIER_ONE",
+    "status": [
+      "SCHEDULED"
+    ],
+    "limit": 1
+  },
+  "resultSet": {
+    "count": 0
+  },
+  "matches": []
+}
