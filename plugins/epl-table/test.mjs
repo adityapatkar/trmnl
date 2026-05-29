@@ -60,3 +60,17 @@ test('shows preseason placeholder when standings table is empty', async () => {
   assert.match(html, /haven't been set for this season yet/i);
   assert.match(html, /Season starts/i);
 });
+
+test('also renders correctly when polling response is at the top level (TRMNL single-URL mode)', async () => {
+  // On-device with one polling URL, TRMNL expands the response keys at top level
+  // instead of under IDX_0. Simulate by passing the fixture as formFields and no idxResponses.
+  const fixture = await loadFixture('standings');
+  const html = await renderTemplate(await loadTemplate(), {
+    formFields: { ...(await loadForm()), ...fixture },
+    idxResponses: [],
+  });
+  // Should render the full table, not the "Couldn't load" placeholder
+  assert.match(html, /Premier League/i);
+  const positions = (html.match(/class="pos"/g) || []).length;
+  assert.equal(positions, 20);
+});

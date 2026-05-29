@@ -45,6 +45,12 @@ node tools/preview.mjs --template plugins/epl-table/markup.liquid \
 node --test plugins/epl-table/test.mjs
 ```
 
+## Field-shape note (TRMNL single-URL mode)
+
+This plugin has exactly one polling URL. TRMNL exposes a single URL's response **at the top level** of the markup context, not under `IDX_0` — so the template uses `IDX_0.standings | default: standings` to read either location (local tests + on-device both work). If you adapt this plugin to use multiple URLs (e.g., add a relegation-zone-specific endpoint), the `IDX_0` path will start applying; the polymorphic access keeps working either way.
+
 ## Sample fixtures
 
 - `standings.json` — live captured 2025-26 final-table standings (Arsenal champion, Man Utd 3rd, Wolves bottom)
+- `standings-empty.json` — synthesized preseason fixture (empty `table`, season `startDate` set) for testing the preseason placeholder
+- `bad-token.json` — synthesized auth-error response (`{"message": "Your API token is invalid.", "errorCode": 400}`)

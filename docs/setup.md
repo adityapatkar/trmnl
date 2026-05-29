@@ -112,3 +112,4 @@ Each plugin refreshes on its own interval independent of the playlist:
 - **Off-season / no fixture** → Man Utd plugin shows "Off-season — no fixture scheduled" when no SCHEDULED match exists.
 - **UCL shows no highlighted row** → expected if Man Utd didn't qualify for the current UCL season.
 - **Crests look pixelated on e-ink** → check that the `crest-img` CSS filter (`grayscale(100%) contrast(1.5) brightness(0.92)`) is in the inlined CSS. Without it, colorful crests dither poorly.
+- **Single-URL plugin (EPL) shows "Couldn't load …" but logs show the URL succeeded** → TRMNL's single-URL mode exposes response keys at the *top level* of the markup context, not under `IDX_0`. The EPL plugin's markup handles both shapes via `IDX_0.standings | default: standings`. If you copied an older markup that only checks `IDX_0`, re-paste the latest `markup.liquid`. (The other three plugins have multiple polling URLs so this doesn't bite them.)

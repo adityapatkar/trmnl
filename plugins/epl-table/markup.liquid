@@ -23,27 +23,36 @@ table.standings tbody tr.cut-line td { border-bottom: 1.5px dashed #888; }
 </style>
 
 {%- comment -%}
-  Shape-based "missing API key" detection (see transit plugin for rationale).
+  TRMNL polling-response shape varies by URL count:
+    * MULTIPLE polling URLs → exposed as IDX_0, IDX_1, ... (transit, Man Utd, UCL)
+    * SINGLE polling URL → fields exposed at the TOP LEVEL of the markup context
+  This plugin has one URL, so on-device the response keys (`standings`, `season`,
+  `message`, etc.) sit at the top level. The local test harness always uses IDX_0.
+  `| default:` lets the template work in both modes — try IDX_0.X first, fall back
+  to top-level X.
 {%- endcomment -%}
-{%- if IDX_0.standings == nil -%}
+{%- assign std = IDX_0.standings | default: standings -%}
+{%- assign ssn = IDX_0.season | default: season -%}
+{%- assign err_msg = IDX_0.message | default: message -%}
+{%- if std == nil -%}
   <div class="screen"><div class="placeholder setup">
     Couldn't load Premier League data. Check your football-data.org API key.
-    {% if IDX_0.message %}<br/><br/><small>{{ IDX_0.message }}</small>{% endif %}
+    {% if err_msg %}<br/><br/><small>{{ err_msg }}</small>{% endif %}
   </div></div>
-{%- elsif IDX_0.standings[0].table == nil or IDX_0.standings[0].table.size == 0 -%}
+{%- elsif std[0].table == nil or std[0].table.size == 0 -%}
   <div class="screen"><div class="placeholder">
     Standings haven't been set for this season yet.
-    {%- if IDX_0.season.startDate %}<br/><small>Season starts {{ IDX_0.season.startDate }}.</small>{% endif -%}
+    {%- if ssn.startDate %}<br/><small>Season starts {{ ssn.startDate }}.</small>{% endif -%}
   </div></div>
 {%- else -%}
-  {%- assign rows = IDX_0.standings[0].table -%}
-  {%- assign matchday = IDX_0.season.currentMatchday | default: "?" -%}
+  {%- assign rows = std[0].table -%}
+  {%- assign matchday = ssn.currentMatchday | default: "?" -%}
   <div class="screen">
     <div class="title-bar">
       <img class="pl-logo" alt="Premier League" src="https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg"/>
       <div class="t-stack">
         <span class="t">Premier League</span>
-        <span class="t-sub">{{ IDX_0.season.startDate | date: "%Y" }}–{{ IDX_0.season.endDate | date: "%y" }} · Matchday {{ matchday }}</span>
+        <span class="t-sub">{{ ssn.startDate | date: "%Y" }}–{{ ssn.endDate | date: "%y" }} · Matchday {{ matchday }}</span>
       </div>
       <div class="meta">{{ now | date: "%H:%M" }}<br/><span style="opacity:0.6">refreshes 60m</span></div>
     </div>
