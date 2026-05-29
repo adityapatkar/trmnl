@@ -1,0 +1,50 @@
+{
+  "last_updated": 1780026540,
+  "ttl": 60,
+  "data": {
+    "stations": [
+      {
+        "station_id": "0826359a-1f3f-11e7-bf6b-3863bb334450",
+        "legacy_id": "31999",
+        "is_installed": 1,
+        "is_renting": 1,
+        "is_returning": 1,
+        "last_reported": 1780026439,
+        "num_bikes_available": 11,
+        "num_bikes_disabled": 0,
+        "num_docks_available": 0,
+        "num_docks_disabled": 0,
+        "num_ebikes_available": 0,
+        "num_scooters_available": 0,
+        "num_scooters_unavailable": 0,
+        "eightd_has_available_keys": false
+      },
+      {
+        "station_id": "08263601-1f3f-11e7-bf6b-3863bb334450",
+        "legacy_id": "31998",
+        "is_installed": 1,
+        "is_renting": 1,
+        "is_returning": 1,
+        "last_reported": 1780026493,
+        "num_bikes_available": 6,
+        "num_bikes_disabled": 0,
+        "num_docks_available": 8,
+        "num_docks_disabled": 1,
+        "num_ebikes_available": 1,
+        "num_scooters_available": 0,
+        "num_scooters_unavailable": 0,
+        "eightd_has_available_keys": false
+      },
+      {
+        "station_id": "OTHER_STATION_NOT_CONFIGURED",
+        "is_installed": 1,
+        "is_renting": 1,
+        "is_returning": 1,
+        "last_reported": 1780026500,
+        "num_bikes_available": 5,
+        "num_ebikes_available": 2,
+        "num_docks_available": 4
+      }
+    ]
+  }
+}

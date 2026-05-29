@@ -41,3 +41,19 @@
   name: BusTime API base URL
   description: Normally leave this default.
   default: https://www.fairfaxcounty.gov/bustime/api/v3
+
+- keyname: cabi_station_ids
+  field_type: string
+  name: Capital Bikeshare station IDs (comma-separated)
+  description: Optional — leave blank to hide the bikeshare row.
+  help_text: Find IDs at <a href="https://capitalbikeshare.com/system-data">capitalbikeshare.com/system-data</a> or query <code>gbfs.capitalbikeshare.com/gbfs/en/station_information.json</code>. IDs are UUID-like strings (e.g. <code>0826359a-1f3f-11e7-bf6b-3863bb334450</code>).
+  optional: true
+  placeholder: id1,id2
+
+- keyname: cabi_station_names
+  field_type: string
+  name: Capital Bikeshare station display names (comma-separated)
+  description: Optional — parallel list to the IDs. Names you'd like shown on the device.
+  help_text: Must match the order of the IDs above. If left blank when IDs are set, the station ID strings are shown instead.
+  optional: true
+  placeholder: Tysons Metro South,Tysons Metro North

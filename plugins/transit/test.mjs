@@ -15,7 +15,7 @@ async function loadTemplate() {
   return readFile(new URL('./markup.liquid', import.meta.url), 'utf8');
 }
 
-async function renderAll({ predictions = 'wmata-predictions', buses = 'fairfax-predictions', incidents = 'wmata-incidents-empty', bulletins = 'fairfax-bulletins-empty', form, now } = {}) {
+async function renderAll({ predictions = 'wmata-predictions', buses = 'fairfax-predictions', incidents = 'wmata-incidents-empty', bulletins = 'fairfax-bulletins-empty', cabi = 'cabi-status', form, now } = {}) {
   return renderTemplate(await loadTemplate(), {
     formFields: { ...(await loadForm()), ...form },
     idxResponses: [
@@ -23,6 +23,7 @@ async function renderAll({ predictions = 'wmata-predictions', buses = 'fairfax-p
       await loadFixture(buses),
       await loadFixture(incidents),
       await loadFixture(bulletins),
+      await loadFixture(cabi),
     ],
     now,
   });
@@ -144,4 +145,44 @@ test('shows the title-bar warning indicator when alerts are present', async () =
 test('hides the title-bar warning indicator when no alerts', async () => {
   const html = await renderAll(); // both empty by default
   assert.doesNotMatch(html, /⚠/);
+});
+
+test('renders Capital Bikeshare row with normal-bike, e-bike, dock counts for configured stations', async () => {
+  const html = await renderAll();
+  // Header
+  assert.match(html, /Capital Bikeshare/i);
+  // Station name appears
+  assert.match(html, /Tysons Metro South/i);
+  assert.match(html, /Tysons Metro North/i);
+  // Tysons Metro South in fixture: 11 bikes total, 0 ebikes → 11 normal, 0 e-bikes, 0 docks (FULL)
+  assert.match(html, />11<\/strong> bikes/);
+  assert.match(html, /FULL/);
+  // Tysons Metro North in fixture: 6 bikes total, 1 ebike → 5 normal, 1 e-bike, 8 docks
+  assert.match(html, />5<\/strong> bikes/);
+  assert.match(html, />1<\/strong> e-bikes/);
+  assert.match(html, />8<\/strong> docks/);
+});
+
+test('hides Capital Bikeshare row when cabi_station_ids is blank', async () => {
+  const html = await renderAll({ form: { cabi_station_ids: '', cabi_station_names: '' } });
+  // The row container shouldn't render (the "Capital Bikeshare" literal still
+  // appears inside CSS comments in the <style> block — check for the actual element)
+  assert.doesNotMatch(html, /class="cabi-row"/);
+  assert.doesNotMatch(html, /class="cabi-title"/);
+});
+
+test('hides Capital Bikeshare row when GBFS response has no stations', async () => {
+  const html = await renderAll({ cabi: 'cabi-status-empty' });
+  assert.doesNotMatch(html, /class="cabi-row"/);
+});
+
+test('shows "station offline" for a configured station missing from the GBFS response', async () => {
+  const html = await renderAll({
+    form: {
+      cabi_station_ids: '0826359a-1f3f-11e7-bf6b-3863bb334450,NONEXISTENT_STATION_ID',
+      cabi_station_names: 'Tysons Metro South,Bogus Station',
+    },
+  });
+  assert.match(html, /Bogus Station/i);
+  assert.match(html, /station offline/i);
 });

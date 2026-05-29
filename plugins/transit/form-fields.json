@@ -4,5 +4,7 @@
   "wmata_station_name": "Tysons",
   "fairfax_api_key": "test-key-not-used-in-render",
   "fairfax_stop_ids": "6307,6360",
-  "fairfax_base_url": "https://www.fairfaxcounty.gov/bustime/api/v3"
+  "fairfax_base_url": "https://www.fairfaxcounty.gov/bustime/api/v3",
+  "cabi_station_ids": "0826359a-1f3f-11e7-bf6b-3863bb334450,08263601-1f3f-11e7-bf6b-3863bb334450",
+  "cabi_station_names": "Tysons Metro South,Tysons Metro North"
 }

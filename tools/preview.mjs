@@ -7,8 +7,12 @@ const program = new Command();
 program
   .requiredOption('--template <path>', 'Liquid template file')
   .option('--form-fields <path>', 'JSON object of form field values', null)
-  .option('--idx-0 <path>', null).option('--idx-1 <path>', null)
-  .option('--idx-2 <path>', null).option('--idx-3 <path>', null)
+  .option('--idx-0 <path>', 'IDX_0 response JSON', null)
+  .option('--idx-1 <path>', 'IDX_1 response JSON', null)
+  .option('--idx-2 <path>', 'IDX_2 response JSON', null)
+  .option('--idx-3 <path>', 'IDX_3 response JSON', null)
+  .option('--idx-4 <path>', 'IDX_4 response JSON', null)
+  .option('--idx-5 <path>', 'IDX_5 response JSON', null)
   .option('--now <iso>', 'fixed timestamp for "now"', null)
   .requiredOption('--out <path>', 'output HTML file');
 
@@ -20,7 +24,7 @@ async function readJson(p) { return p ? JSON.parse(await readFile(p, 'utf8')) : 
 const template = await readFile(opts.template, 'utf8');
 const formFields = (await readJson(opts.formFields)) ?? {};
 const idxResponses = [];
-for (let i = 0; i < 4; i++) {
+for (let i = 0; i < 6; i++) {
   const path = opts[`idx${i}`];
   if (path) idxResponses[i] = await readJson(path);
 }

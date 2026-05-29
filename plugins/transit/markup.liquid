@@ -5,6 +5,17 @@
 .alert-line strong { font-weight: 800; letter-spacing: 0.05em; }
 .col-error { background: var(--bg-shade); border: 1px solid var(--ink); padding: 10px 12px; margin: 12px 0; font-size: 11px; line-height: 1.35; color: var(--ink); }
 .col-error strong { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* Capital Bikeshare row (bottom of screen, above alerts) */
+.cabi-row { border-top: 2px solid var(--ink); padding: 6px 22px 7px; font-family: var(--mono); font-size: 11px; line-height: 1.2; color: var(--ink); }
+.cabi-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+.cabi-badge { background: var(--ink); color: var(--bg); font-weight: 900; font-size: 10px; padding: 2px 6px; letter-spacing: 0.08em; border-radius: 2px; font-family: var(--sans); }
+.cabi-title { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; font-family: var(--sans); }
+.cabi-station { display: flex; align-items: baseline; gap: 14px; padding: 1px 0; }
+.cabi-name { flex: 1; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; font-family: var(--sans); }
+.cabi-stat { font-size: 11px; color: var(--ink-soft); }
+.cabi-stat strong { color: var(--ink); font-weight: 800; }
+.cabi-flag { font-size: 9px; font-weight: 800; letter-spacing: 0.1em; background: var(--ink); color: var(--bg); padding: 1px 5px; border-radius: 2px; }
 </style>
 {%- comment -%}
   TRMNL exposes polling responses (IDX_0..N) reliably in the markup, but form-field
@@ -166,6 +177,51 @@
 {%- endif -%}{%- comment -%}/fairfax_ok branch{%- endcomment -%}
       </div>
     </div>
+
+    {%- comment -%}
+      Capital Bikeshare row — renders only when cabi_station_ids is set.
+      IDX_4 = station_status.json (GBFS). Public, no auth needed.
+      Filter to configured station IDs; render bike/ebike/dock counts per station.
+    {%- endcomment -%}
+    {%- assign cabi_ids_raw = cabi_station_ids | default: "" | strip -%}
+    {%- assign cabi_names_raw = cabi_station_names | default: "" | strip -%}
+    {%- assign cabi_ids = cabi_ids_raw | split: "," -%}
+    {%- assign cabi_names = cabi_names_raw | split: "," -%}
+    {%- assign cabi_stations = IDX_4.data.stations -%}
+    {%- assign cabi_count = 0 -%}{%- if cabi_stations %}{%- assign cabi_count = cabi_stations.size -%}{% endif -%}
+    {%- if cabi_ids_raw != "" and cabi_count > 0 -%}
+      <div class="cabi-row">
+        <div class="cabi-head">
+          <span class="cabi-badge">CaBi</span>
+          <span class="cabi-title">Capital Bikeshare</span>
+        </div>
+        {%- for id in cabi_ids -%}
+          {%- assign trimmed_id = id | strip -%}
+          {%- assign matches = cabi_stations | where: "station_id", trimmed_id -%}
+          {%- assign st = matches | first -%}
+          {%- assign name = cabi_names[forloop.index0] | strip | default: trimmed_id -%}
+          <div class="cabi-station">
+            <span class="cabi-name">{{ name }}</span>
+            {%- if st == nil -%}
+              <span class="cabi-stat">station offline</span>
+            {%- else -%}
+              {%- assign total_bikes = st.num_bikes_available | default: 0 -%}
+              {%- assign ebikes = st.num_ebikes_available | default: 0 -%}
+              {%- assign normal_bikes = total_bikes | minus: ebikes -%}
+              {%- if normal_bikes < 0 -%}{%- assign normal_bikes = 0 -%}{%- endif -%}
+              {%- assign docks = st.num_docks_available | default: 0 -%}
+              <span class="cabi-stat"><strong>{{ normal_bikes }}</strong> bikes</span>
+              <span class="cabi-stat"><strong>{{ ebikes }}</strong> e-bikes</span>
+              <span class="cabi-stat"><strong>{{ docks }}</strong> docks</span>
+              {%- if docks == 0 -%}<span class="cabi-flag">FULL</span>{%- endif -%}
+              {%- if total_bikes == 0 -%}<span class="cabi-flag">EMPTY</span>{%- endif -%}
+              {%- if st.is_renting == 0 -%}<span class="cabi-flag">OUT OF SERVICE</span>{%- endif -%}
+            {%- endif -%}
+          </div>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+
     {%- if total_alerts > 0 -%}
       <div style="border-top: 2px solid var(--ink); padding: 8px 22px; font-size: 12px; line-height: 1.3;">
         {{ rail_alerts }}

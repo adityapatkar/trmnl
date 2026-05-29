@@ -11,21 +11,24 @@ https://api.wmata.com/StationPrediction.svc/json/GetPrediction/{{ wmata_station_
 {{ fairfax_base_url }}/getpredictions?key={{ fairfax_api_key }}&stpid={{ fairfax_stop_ids }}&format=json
 https://api.wmata.com/Incidents.svc/json/Incidents
 {{ fairfax_base_url }}/getservicebulletins?key={{ fairfax_api_key }}&stpid={{ fairfax_stop_ids }}&format=json
+https://gbfs.capitalbikeshare.com/gbfs/en/station_status.json
    ```
 3. **Headers**:
    ```
    api_key={{ wmata_api_key }}
    ```
-4. **Form fields**: paste the contents of [`form-fields.yaml`](form-fields.yaml) into the plugin's Form Fields section in TRMNL admin (or import it via the [visual form builder](https://usetrmnl.github.io/trmnl-form-builder/)). It defines six fields:
+4. **Form fields**: paste the contents of [`form-fields.yaml`](form-fields.yaml) into the plugin's Form Fields section in TRMNL admin (or import it via the [visual form builder](https://usetrmnl.github.io/trmnl-form-builder/)). It defines:
 
-   | keyname              | type     | required | notes                                              |
-   |----------------------|----------|----------|----------------------------------------------------|
-   | `wmata_api_key`      | password | yes      | from developer.wmata.com                           |
-   | `wmata_station_code` | string   | yes      | default `N02` (Tysons)                             |
-   | `wmata_station_name` | string   | yes      | default `Tysons`                                   |
-   | `fairfax_api_key`    | password | yes      | from fairfaxcounty.gov                             |
-   | `fairfax_stop_ids`   | string   | yes      | comma-separated IDs, e.g. `6307,6360`              |
-   | `fairfax_base_url`   | url      | yes      | default `https://www.fairfaxcounty.gov/bustime/api/v3` |
+   | keyname               | type     | required | notes                                                  |
+   |-----------------------|----------|----------|--------------------------------------------------------|
+   | `wmata_api_key`       | password | yes      | from developer.wmata.com                               |
+   | `wmata_station_code`  | string   | yes      | default `N02` (Tysons)                                 |
+   | `wmata_station_name`  | string   | yes      | default `Tysons`                                       |
+   | `fairfax_api_key`     | password | yes      | from fairfaxcounty.gov                                 |
+   | `fairfax_stop_ids`    | string   | yes      | comma-separated IDs, e.g. `6307,6360`                  |
+   | `fairfax_base_url`    | url      | yes      | default `https://www.fairfaxcounty.gov/bustime/api/v3` |
+   | `cabi_station_ids`    | string   | no       | comma-separated Capital Bikeshare station UUIDs (blank → hide bikeshare row) |
+   | `cabi_station_names`  | string   | no       | parallel list of display names                         |
 
    See [`form-fields.yaml`](form-fields.yaml) for the descriptions/help text that surface in the TRMNL admin UI.
 
@@ -44,6 +47,20 @@ These differ from public BusTime docs — confirmed against the actual live resp
 - **WMATA trains** use the `Group` field (`"1"` / `"2"`) for direction, NOT `DirectionNum`. `DestinationCode` can be `null`.
 - **WMATA incidents** `LinesAffected` is a semicolon-separated string with a trailing `;` (e.g., `"SV;OR;"`).
 - **Fairfax service bulletins** use abbreviated field names: array is `sb` (not `service-bulletins`); each bulletin has `nm`, `sbj`, `brf`, `dtl`, `prty`, `srvc[]`.
+- **Capital Bikeshare** uses standard [GBFS](https://gbfs.org). `station_status.json` has `num_bikes_available` (total, INCLUDING e-bikes), `num_ebikes_available`, `num_docks_available`. Plugin computes normal-bike count = total − ebikes.
+
+## Finding Capital Bikeshare station IDs
+
+```bash
+# All stations in the system (with names, lat/lng):
+curl -s "https://gbfs.capitalbikeshare.com/gbfs/en/station_information.json" | jq '.data.stations[] | {id: .station_id, name, lat, lon}'
+
+# Filter to a lat/lng box near you, e.g. Tysons:
+curl -s "https://gbfs.capitalbikeshare.com/gbfs/en/station_information.json" \
+  | jq '.data.stations[] | select(.lat > 38.91 and .lat < 38.94 and .lon > -77.24 and .lon < -77.20) | {id: .station_id, name}'
+```
+
+Pick 1–3 stations, paste their IDs into `cabi_station_ids` and their names into `cabi_station_names` (same order).
 
 ## Local development
 
@@ -56,6 +73,7 @@ npm run preview -- \
   --idx-1 plugins/transit/samples/fairfax-predictions.json \
   --idx-2 plugins/transit/samples/wmata-incidents.json \
   --idx-3 plugins/transit/samples/fairfax-bulletins.json \
+  --idx-4 plugins/transit/samples/cabi-status.json \
   --out plugins/transit/preview.html
 open plugins/transit/preview.html
 
