@@ -18,3 +18,6 @@ node_modules/
 
 # Plugin export backups can contain API keys (TRMNL bakes form-field values in)
 plugins/*/plugin-export.json
+
+# Local preview files
+plugins/*/preview.html

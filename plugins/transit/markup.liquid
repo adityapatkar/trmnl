@@ -1,0 +1,27 @@
+<style>
+{% include_raw "plugins/_shared/styles.css" %}
+.alert-badge { font-family: var(--mono); font-size: 10px; color: var(--ink-soft); }
+</style>
+{% if wmata_api_key == blank or fairfax_api_key == blank %}
+  <div class="screen">
+    <div class="placeholder setup">
+      Add your WMATA API key and Fairfax Connector API key in plugin settings to see transit predictions.
+    </div>
+  </div>
+{% else %}
+  <div class="screen">
+    <div class="title-bar">
+      <div class="t-stack">
+        <span class="t">{{ wmata_station_name | upcase }} · METRO &amp; BUS</span>
+        <span class="t-sub">Fairfax Connector</span>
+      </div>
+      <div class="meta">
+        {{ now | date: "%H:%M" }}<br/>
+        <span style="opacity:0.6">refreshes 5m</span>
+      </div>
+    </div>
+    <div style="padding: 12px 22px; flex: 1;">
+      <!-- predictions go here in next task -->
+    </div>
+  </div>
+{% endif %}
