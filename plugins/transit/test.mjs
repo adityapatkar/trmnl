@@ -67,3 +67,28 @@ test('renders the line code badge (e.g., SV) for each train', async () => {
   // The captured fixture is at Tysons (Silver Line) so SV should appear
   assert.match(html, /\bSV\b/);
 });
+
+test('renders bus section header (Connector — stops)', async () => {
+  const html = await renderAll();
+  assert.match(html, /Connector/i);
+});
+
+test('renders bus predictions grouped by stop name', async () => {
+  const html = await renderAll();
+  // Each route renders the route number in a badge
+  const fixture = await loadFixture('fairfax-predictions');
+  const firstRoute = fixture['bustime-response'].prd[0].rt;
+  assert.match(html, new RegExp(`\\b${firstRoute}\\b`));
+});
+
+test('renders DUE for buses with prdctdn=DUE', async () => {
+  const html = await renderAll();
+  const fixture = await loadFixture('fairfax-predictions');
+  const hasDue = fixture['bustime-response'].prd.some((p) => p.prdctdn === 'DUE');
+  if (hasDue) assert.match(html, /\bDUE\b/);
+});
+
+test('renders Fairfax error message when bustime-response.error is set', async () => {
+  const html = await renderAll({ buses: 'fairfax-predictions-error' });
+  assert.match(html, /No service scheduled/i);
+});

@@ -70,7 +70,39 @@
       </div>
 
       <div style="padding: 12px 18px; border-left: 2px solid var(--ink);">
-        <!-- bus column in next task -->
+        <div style="display: flex; align-items: baseline; gap: 8px; border-bottom: 3px solid var(--ink); padding-bottom: 4px; margin-bottom: 6px;">
+  <span style="background: var(--ink); color: var(--bg); font-weight: 900; font-size: 11px; padding: 3px 7px; letter-spacing: 0.1em; border-radius: 2px;">FFX</span>
+  <span style="font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;">Connector — nearby stops</span>
+</div>
+
+{%- assign bus_resp = IDX_1["bustime-response"] -%}
+
+{%- if bus_resp.error -%}
+  {%- for err in bus_resp.error limit: 2 -%}
+    <div style="padding: 8px 0; color: var(--ink-soft); font-size: 12px;">⚠ {{ err.msg }}</div>
+  {%- endfor -%}
+{%- elsif bus_resp.prd.size == 0 -%}
+  <div style="padding: 24px 8px; text-align: center; color: var(--ink-soft);">No bus predictions.</div>
+{%- else -%}
+  {%- assign stop_names = bus_resp.prd | map: "stpnm" | uniq -%}
+  {%- for sn in stop_names -%}
+    {%- assign rows = bus_resp.prd | where: "stpnm", sn -%}
+    <div style="margin-top: 8px;">
+      <div style="font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: var(--bg-shade); padding: 3px 8px; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink);">
+        ▸ {{ sn }}
+      </div>
+      {%- for p in rows limit: 4 -%}
+        <div style="display: grid; grid-template-columns: 44px 1fr 50px; gap: 8px; padding: 5px 8px; border-bottom: 1px solid var(--rule-soft); align-items: center; font-family: var(--mono); font-size: 13px; font-weight: 700; line-height: 1;">
+          <span style="background: var(--ink); color: var(--bg); text-align: center; padding: 3px 0; font-size: 11px; font-weight: 900; letter-spacing: 0.04em; border-radius: 2px;">{{ p.rt }}</span>
+          <span style="text-transform: uppercase; font-size: 12px;">{{ p.des }}</span>
+          <span style="text-align: right; font-weight: 800;">
+            {%- if p.prdctdn == "DUE" -%}DUE{%- else -%}{{ p.prdctdn }}{%- endif -%}
+          </span>
+        </div>
+      {%- endfor -%}
+    </div>
+  {%- endfor -%}
+{%- endif -%}
       </div>
     </div>
   </div>
