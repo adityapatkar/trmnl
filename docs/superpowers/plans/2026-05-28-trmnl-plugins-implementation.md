@@ -721,21 +721,21 @@ curl -s "https://www.fairfaxcounty.gov/bustime/api/v3/getservicebulletins?key=$F
   > plugins/transit/samples/fairfax-bulletins.json
 ```
 
-Confirm structure. The Clever Devices BusTime v3 docs specify `{"bustime-response": {"service-bulletins": [{...}]}}` with each bulletin having `name`, `subject`, `brief`, `detail`, `priority`, `service_affected[]`.
+Confirm structure. Despite the BusTime v3 docs documenting field names like `service-bulletins`, `name`, `subject`, `brief`, `detail`, `priority`, `service_affected[]`, the live Fairfax API returns **abbreviated names**: array `sb` with each bulletin having `nm`, `sbj`, `brf`, `dtl`, `prty`, `srvc[]` (with `rt`, `rtdir`, `stpid`, `cse`, `efct`).
 
-If empty, create a synthetic test fixture matching that shape:
+If empty, create a synthetic test fixture matching the actual abbreviated shape:
 ```bash
 cat > plugins/transit/samples/fairfax-bulletins.json <<'EOF'
 {
   "bustime-response": {
-    "service-bulletins": [
+    "sb": [
       {
-        "name": "ROUTE_423_DETOUR_20260528",
-        "subject": "Route 423 detour",
-        "brief": "Route 423 buses are detouring around Tysons Blvd due to roadwork until 18:00.",
-        "detail": "Tysons Blvd is closed between Greensboro Drive and Westpark Drive. Affected stops are being skipped; nearest alternate is Westpark Pl + International Dr.",
-        "priority": "High",
-        "service_affected": [{ "rt": "423", "stpid": "1001" }]
+        "nm": "ROUTE_423_DETOUR_20260528",
+        "sbj": "Route 423 detour",
+        "brf": "Route 423 buses are detouring around Tysons Blvd due to roadwork until 18:00.",
+        "dtl": "Tysons Blvd is closed between Greensboro Drive and Westpark Drive. Affected stops are being skipped; nearest alternate is Westpark Pl + International Dr.",
+        "prty": "High",
+        "srvc": [{ "rt": "423", "stpid": "1001" }]
       }
     ]
   }
@@ -747,7 +747,7 @@ EOF
 
 Create `plugins/transit/samples/fairfax-bulletins-empty.json`:
 ```json
-{ "bustime-response": { "service-bulletins": [] } }
+{ "bustime-response": { "sb": [] } }
 ```
 
 - [ ] **Step 5: Commit**
@@ -1235,7 +1235,7 @@ Standard Liquid has no array `.push`, so we build the rendered alert HTML using 
   {%- endfor -%}
 {%- endcapture -%}
 
-{%- assign bus_alerts = IDX_3["bustime-response"]["service-bulletins"] | default: empty -%}
+{%- assign bus_alerts = IDX_3["bustime-response"].sb | default: empty -%}
 {%- assign bus_alert_count = bus_alerts.size -%}
 {%- assign total_alerts = rail_alert_count | plus: bus_alert_count -%}
 ```
@@ -1259,7 +1259,7 @@ And add the **alerts footer** at the bottom of the screen (just before the closi
   <div style="border-top: 2px solid var(--ink); padding: 8px 22px; font-size: 12px; line-height: 1.3;">
     {{ rail_alerts }}
     {%- for ba in bus_alerts limit: 2 -%}
-      <div class="alert-line"><strong>BUS</strong> · {{ ba.brief | default: ba.subject | truncate: 160 }}</div>
+      <div class="alert-line"><strong>BUS</strong> · {{ ba.brf | default: ba.sbj | truncate: 160 }}</div>
     {%- endfor -%}
     {%- if total_alerts > 3 %}<div style="opacity: 0.6; margin-top: 2px;">+{{ total_alerts | minus: 3 }} more alerts</div>{% endif -%}
   </div>

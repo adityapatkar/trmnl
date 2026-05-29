@@ -185,7 +185,7 @@ The transit plugin's two metro-direction labels (e.g., "Toward Largo" and "Towar
 - `IDX_1["bustime-response"].prd[]` — `rt` (route), `rtdir` (direction), `des` (headsign), `stpnm` (stop name), `stpid`, `prdctdn` (countdown: `"DUE"` or minutes), `prdtm` (timestamp), `dyn` (delay flag).
 - `IDX_1["bustime-response"].error[]` — error objects when something fails.
 - `IDX_2.Incidents[]` — WMATA rail incidents: `IncidentID`, `Description`, `DateUpdated` (ISO), `IncidentType` (e.g., `"Alert"`, `"Delay"`), `LinesAffected` (string of semicolon-separated line codes — e.g., `"SV;OR;"`).
-- `IDX_3["bustime-response"]["service-bulletins"][]` — Fairfax service bulletins for the configured stops: `name`, `subject`, `brief` (short text), `detail` (long text), `priority` (`"Low"`/`"Medium"`/`"High"`), `service_affected[]` (objects scoping to specific routes/stops/direction).
+- `IDX_3["bustime-response"].sb[]` — Fairfax service bulletins for the configured stops. Field names are abbreviated (confirmed against live API): `nm` (name), `sbj` (subject), `brf` (brief, short text), `dtl` (detail, long text), `prty` (priority — `"Low"`/`"Medium"`/`"High"`), `srvc[]` (service affected — objects scoping to specific routes/stops/direction, with fields `rt`, `rtdir`, `stpid`, `cse`, `efct`).
 - `IDX_3["bustime-response"].error[]` — same error shape as predictions.
 
 ### Shaping logic
@@ -232,7 +232,7 @@ Visual reference: `.superpowers/brainstorm/.../content/transit-layout-v2.html` (
 - WMATA `Trains` empty (late hours) → "No predictions" placeholder under each direction.
 - WMATA `Incidents` array empty (typical case) → alert footer collapsed; title-bar `⚠` indicator hidden.
 - Fairfax `bustime-response.error` populated → render `error[0].msg` in place of bus predictions.
-- Fairfax `service-bulletins` empty or `error` populated for the bulletins call → silently omit the bus alerts portion; rail alerts still render if present.
+- Fairfax `sb` empty or `error` populated for the bulletins call → silently omit the bus alerts portion; rail alerts still render if present.
 - `Min: "---"` renders as `"—"`.
 - WMATA `Incidents` returns an alert affecting only lines *not* serving the configured station (e.g., Red Line alert while we're showing Silver) → filtered out, footer collapsed accordingly.
 
@@ -560,7 +560,7 @@ Visual reference: `.superpowers/brainstorm/.../content/epl-layout-v2.html`.
 - **Verify (implementation)**: football-data.org v4 status filter syntax. Spec assumes `status=LIVE` aliases `IN_PLAY,PAUSED`. If not, fall back to two URLs.
 - **Verify (implementation)**: UCL stage enumeration strings (`LEAGUE_STAGE`, `PLAY_OFFS`, `LAST_16`, `QUARTER_FINALS`, `SEMI_FINALS`, `FINAL`). UEFA's 2024-25 reformat introduced a 24-team knockout playoff round; football-data.org's label for it needs confirmation.
 - **Verify (implementation)**: WMATA `Incidents.svc` `LinesAffected` format is the documented semicolon-trailing string (e.g., `"SV;OR;"`) — string-contains check is the assumed filter mechanism.
-- **Verify (implementation)**: Fairfax `getservicebulletins` response shape — the spec assumes `bustime-response.service-bulletins[]` with `name/subject/brief/detail/priority/service_affected` fields per the Clever Devices BusTime v3 docs. If actual response uses a different key (e.g., `sb` instead of `service-bulletins`), templates need a tweak.
+- **Resolved**: Fairfax `getservicebulletins` uses abbreviated field names (`sb`, `nm`, `sbj`, `brf`, `dtl`, `prty`, `srvc`) — confirmed against the live API. Spec and templates updated to match.
 
 ## Reference: brainstorm mockups
 
