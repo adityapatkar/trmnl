@@ -1,0 +1,17 @@
+# TRMNL admin form-builder definition for the Premier League table plugin.
+# Paste this YAML into the plugin's "Form Fields" section in TRMNL admin.
+#
+# `form-fields.json` (sibling file) is for the local Node.js test harness only.
+
+- keyname: football_data_api_key
+  field_type: password
+  name: football-data.org API key
+  description: Free token from <a href="https://www.football-data.org/client/register">football-data.org/client/register</a>.
+
+- keyname: highlight_team_id
+  field_type: number
+  name: Highlight team ID
+  description: Row to highlight in the table.
+  help_text: <code>66</code> = Manchester United. Find other team IDs at <a href="https://api.football-data.org/v4/teams">api.football-data.org/v4/teams</a>.
+  default: 66
+  placeholder: 66

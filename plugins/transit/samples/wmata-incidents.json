@@ -1,0 +1,11 @@
+{
+  "Incidents": [
+    {
+      "IncidentID": "S2WHN9-2026-05-28-12-30",
+      "Description": "Silver Line: Single-tracking between McLean and Wiehle-Reston East due to scheduled track work. Expect 10-minute delays in both directions.",
+      "DateUpdated": "2026-05-28T14:18:00",
+      "IncidentType": "Alert",
+      "LinesAffected": "SV;"
+    }
+  ]
+}

@@ -1,6 +1,9 @@
 # Visual-companion / brainstorm session artifacts (local only)
 .superpowers/
 
+# Dependencies
+node_modules/
+
 # macOS
 .DS_Store
 
@@ -15,3 +18,7 @@
 
 # Plugin export backups can contain API keys (TRMNL bakes form-field values in)
 plugins/*/plugin-export.json
+
+# Local preview files
+plugins/*/preview.html
+plugins/*/preview-*.html

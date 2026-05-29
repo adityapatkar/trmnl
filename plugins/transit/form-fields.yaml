@@ -1,0 +1,59 @@
+# TRMNL admin form-builder definition for the transit plugin.
+# Paste this YAML into the plugin's "Form Fields" section in the TRMNL admin
+# (or use https://usetrmnl.github.io/trmnl-form-builder/ to import it visually).
+#
+# `form-fields.json` (sibling file) is for the local Node.js test harness only —
+# it holds placeholder values used when rendering against captured fixtures.
+
+- keyname: wmata_api_key
+  field_type: password
+  name: WMATA API key
+  description: Get a free key at <a href="https://developer.wmata.com">developer.wmata.com</a> (subscribe to the Default Tier).
+
+- keyname: wmata_station_code
+  field_type: string
+  name: WMATA station code
+  description: Two-character code for the station you want to watch (e.g., <code>N02</code> = Tysons, <code>K05</code> = Ballston).
+  default: N02
+  placeholder: N02
+
+- keyname: wmata_station_name
+  field_type: string
+  name: Station display name
+  description: Shown in the plugin's title bar (e.g., "Tysons").
+  default: Tysons
+  placeholder: Tysons
+
+- keyname: fairfax_api_key
+  field_type: password
+  name: Fairfax Connector BusTime API key
+  description: Register at <a href="https://www.fairfaxcounty.gov/connector/bustracker/developers">fairfaxcounty.gov/connector/bustracker/developers</a>.
+
+- keyname: fairfax_stop_ids
+  field_type: string
+  name: Fairfax stop IDs (comma-separated)
+  description: Up to 3 nearby stop IDs.
+  help_text: Find stops near you at <a href="https://www.fairfaxcounty.gov/bustime/home.jsp">fairfaxcounty.gov/bustime/home.jsp</a> — click a stop on the map to reveal its ID.
+  placeholder: 6307,6360
+
+- keyname: fairfax_base_url
+  field_type: url
+  name: BusTime API base URL
+  description: Normally leave this default.
+  default: https://www.fairfaxcounty.gov/bustime/api/v3
+
+- keyname: cabi_station_ids
+  field_type: string
+  name: Capital Bikeshare station IDs (comma-separated)
+  description: Optional — leave blank to hide the bikeshare row.
+  help_text: Find IDs at <a href="https://capitalbikeshare.com/system-data">capitalbikeshare.com/system-data</a> or query <code>gbfs.capitalbikeshare.com/gbfs/en/station_information.json</code>. IDs are UUID-like strings (e.g. <code>0826359a-1f3f-11e7-bf6b-3863bb334450</code>).
+  optional: true
+  placeholder: id1,id2
+
+- keyname: cabi_station_names
+  field_type: string
+  name: Capital Bikeshare station display names (comma-separated)
+  description: Optional — parallel list to the IDs. Names you'd like shown on the device.
+  help_text: Must match the order of the IDs above. If left blank when IDs are set, the station ID strings are shown instead.
+  optional: true
+  placeholder: Tysons Metro South,Tysons Metro North

@@ -1,0 +1,230 @@
+<style>
+{% include_raw "plugins/_shared/styles.css" %}
+.alert-badge { font-family: var(--mono); font-size: 10px; color: var(--ink-soft); }
+.alert-line { margin: 2px 0; }
+.alert-line strong { font-weight: 800; letter-spacing: 0.05em; }
+.col-error { background: var(--bg-shade); border: 1px solid var(--ink); padding: 10px 12px; margin: 12px 0; font-size: 11px; line-height: 1.35; color: var(--ink); }
+.col-error strong { font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* Capital Bikeshare row (bottom of screen, above alerts) */
+.cabi-row { border-top: 2px solid var(--ink); padding: 6px 22px 7px; font-family: var(--mono); font-size: 11px; line-height: 1.2; color: var(--ink); }
+.cabi-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+.cabi-badge { background: var(--ink); color: var(--bg); font-weight: 900; font-size: 10px; padding: 2px 6px; letter-spacing: 0.08em; border-radius: 2px; font-family: var(--sans); }
+.cabi-title { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; font-family: var(--sans); }
+.cabi-station { display: flex; align-items: baseline; gap: 14px; padding: 1px 0; }
+.cabi-name { flex: 1; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; font-family: var(--sans); }
+.cabi-stat { font-size: 11px; color: var(--ink-soft); }
+.cabi-stat strong { color: var(--ink); font-weight: 800; }
+.cabi-flag { font-size: 9px; font-weight: 800; letter-spacing: 0.1em; background: var(--ink); color: var(--bg); padding: 1px 5px; border-radius: 2px; }
+</style>
+{%- comment -%}
+  TRMNL exposes polling responses (IDX_0..N) reliably in the markup, but form-field
+  values (e.g. wmata_api_key) are not always exposed here even when they were used
+  successfully in the polling URL. So we detect "missing/invalid API key" via the
+  shape of the responses: WMATA returns {"Trains": [...]} on success; on a bad key
+  it returns {"message": "..."} with no Trains array. Same idea for Fairfax.
+{%- endcomment -%}
+{%- assign wmata_ok = IDX_0.Trains -%}
+{%- assign fairfax_ok = IDX_1["bustime-response"] -%}
+{% if wmata_ok == nil and fairfax_ok == nil %}
+  <div class="screen">
+    <div class="placeholder setup">
+      Couldn't load transit data. Check your WMATA and Fairfax Connector API keys in plugin settings, then click Force Refresh.
+      {% if IDX_0.message %}<br/><br/><small>WMATA: {{ IDX_0.message }}</small>{% endif %}
+    </div>
+  </div>
+{% else %}
+  {%- assign our_lines = "" -%}
+  {%- if IDX_0.Trains.size > 0 -%}
+    {%- assign our_lines = IDX_0.Trains | map: "Line" | uniq | join: ";" -%}
+  {%- endif -%}
+
+  {%- assign rail_alerts_all = IDX_2.Incidents | default: empty -%}
+  {%- assign rail_alert_count = 0 -%}
+  {%- capture rail_alerts -%}
+    {%- for inc in rail_alerts_all -%}
+      {%- assign matched = false -%}
+      {%- assign affected = inc.LinesAffected | split: ";" -%}
+      {%- for code in affected -%}
+        {%- assign t = code | strip -%}
+        {%- if t != "" and our_lines contains t -%}
+          {%- assign matched = true -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {%- if matched -%}
+        {%- assign rail_alert_count = rail_alert_count | plus: 1 -%}
+        <div class="alert-line"><strong>{{ t | upcase }}</strong> · {{ inc.Description | truncate: 160 }} <span style="opacity:0.6">(updated {{ inc.DateUpdated | date: "%H:%M" }})</span></div>
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endcapture -%}
+
+  {%- assign bus_alerts = IDX_3["bustime-response"].sb | default: empty -%}
+  {%- assign bus_alert_count = bus_alerts.size -%}
+  {%- assign total_alerts = rail_alert_count | plus: bus_alert_count -%}
+
+  <div class="screen">
+    <div class="title-bar">
+      <div class="t-stack">
+        <span class="t">{{ wmata_station_name | upcase }} · METRO &amp; BUS</span>
+        <span class="t-sub">
+          Fairfax Connector
+          {%- if total_alerts > 0 %} · <span class="alert-badge">⚠ {{ total_alerts }} alert{% if total_alerts != 1 %}s{% endif %}</span>{% endif -%}
+        </span>
+      </div>
+      <div class="meta">
+        {{ now | date: "%H:%M" }}<br/>
+        <span style="opacity:0.6">refreshes 5m</span>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1.05fr 1fr; flex: 1; min-height: 0;">
+      <div style="padding: 12px 18px;">
+        {%- assign trains = IDX_0.Trains -%}
+        {%- assign first_train = trains | first -%}
+        {%- assign east = trains | where: "Group", "1" -%}
+        {%- assign west = trains | where: "Group", "2" -%}
+        {%- assign dirsets = "east,west" | split: "," -%}
+
+        <div class="dark-strip" style="display: grid; grid-template-columns: 34px 40px 1fr 50px; gap: 6px;">
+          <span style="text-align: center;">LN</span>
+          <span style="text-align: center;">CAR</span>
+          <span>DEST</span>
+          <span style="text-align: right;">MIN</span>
+        </div>
+
+        {%- if wmata_ok == nil -%}
+          <div class="col-error">
+            <strong>WMATA error</strong>
+            {%- if IDX_0.message %}<br/>{{ IDX_0.message | truncate: 200 }}{% else %}<br/>No response from WMATA — check station code &amp; API key.{% endif -%}
+          </div>
+        {%- endif -%}
+
+        {%- unless first_train -%}
+          <div style="padding: 24px 8px; text-align: center; color: var(--ink-soft);">No predictions right now.</div>
+        {%- endunless -%}
+        {%- if first_train -%}
+          {%- for dirset in dirsets -%}
+            {%- if dirset == "east" -%}
+              {%- assign rows = east -%}
+              {%- assign label_dest = east | map: "DestinationName" | first | default: "Inbound" -%}
+              {%- assign dir_label = "Toward " | append: label_dest -%}
+            {%- else -%}
+              {%- assign rows = west -%}
+              {%- assign label_dest = west | map: "DestinationName" | first | default: "Outbound" -%}
+              {%- assign dir_label = "Toward " | append: label_dest -%}
+            {%- endif -%}
+
+            {%- if rows.size > 0 -%}
+              <div style="background: var(--bg-shade); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 3px 8px; font-family: var(--mono); font-size: 10px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; margin-top: 6px;">
+                ▸ {{ dir_label }}
+              </div>
+              {%- for t in rows limit: 4 -%}
+                <div style="display: grid; grid-template-columns: 34px 40px 1fr 50px; gap: 6px; padding: 5px 8px; border-bottom: 1px solid var(--rule-soft); font-family: var(--mono); font-size: 15px; font-weight: 700; align-items: center; line-height: 1;">
+                  <span style="background: var(--ink); color: var(--bg); text-align: center; padding: 3px 0; font-size: 11px; font-weight: 900; letter-spacing: 0.06em; border-radius: 2px;">{{ t.Line }}</span>
+                  <span style="text-align: center; font-weight: 800;">{{ t.Car | default: "-" }}</span>
+                  <span style="text-transform: uppercase;">{{ t.DestinationName }}</span>
+                  <span style="text-align: right; font-weight: 800;">
+                    {%- if t.Min == "---" -%}—{%- else -%}{{ t.Min }}{%- endif -%}
+                  </span>
+                </div>
+              {%- endfor -%}
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+      </div>
+
+      <div style="padding: 12px 18px; border-left: 2px solid var(--ink);">
+        <div style="display: flex; align-items: baseline; gap: 8px; border-bottom: 3px solid var(--ink); padding-bottom: 4px; margin-bottom: 6px;">
+  <span style="background: var(--ink); color: var(--bg); font-weight: 900; font-size: 11px; padding: 3px 7px; letter-spacing: 0.1em; border-radius: 2px;">FFX</span>
+  <span style="font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;">Connector — nearby stops</span>
+</div>
+
+{%- if fairfax_ok == nil -%}
+  <div class="col-error">
+    <strong>Fairfax error</strong><br/>
+    {%- if IDX_1.error %}{{ IDX_1.error | truncate: 200 }}{% elsif IDX_1.message %}{{ IDX_1.message | truncate: 200 }}{% else %}No response from Fairfax BusTime — check API key &amp; stop IDs.{% endif -%}
+  </div>
+{%- else -%}
+
+{%- assign bus_resp = IDX_1["bustime-response"] -%}
+
+{%- if bus_resp.error -%}
+  {%- for err in bus_resp.error limit: 2 -%}
+    <div style="padding: 8px 0; color: var(--ink-soft); font-size: 12px;">⚠ {{ err.msg }}</div>
+  {%- endfor -%}
+{%- elsif bus_resp.prd.size == 0 -%}
+  <div style="padding: 24px 8px; text-align: center; color: var(--ink-soft);">No bus predictions.</div>
+{%- else -%}
+  {%- assign stop_names = bus_resp.prd | map: "stpnm" | uniq -%}
+  {%- for sn in stop_names -%}
+    {%- assign rows = bus_resp.prd | where: "stpnm", sn -%}
+    <div style="margin-top: 8px;">
+      <div style="font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: var(--bg-shade); padding: 3px 8px; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink);">
+        ▸ {{ sn }}
+      </div>
+      {%- for p in rows limit: 4 -%}
+        <div style="display: grid; grid-template-columns: 44px 1fr 50px; gap: 8px; padding: 5px 8px; border-bottom: 1px solid var(--rule-soft); align-items: center; font-family: var(--mono); font-size: 13px; font-weight: 700; line-height: 1;">
+          <span style="background: var(--ink); color: var(--bg); text-align: center; padding: 3px 0; font-size: 11px; font-weight: 900; letter-spacing: 0.04em; border-radius: 2px;">{{ p.rt }}</span>
+          <span style="text-transform: uppercase; font-size: 12px;">{{ p.des }}</span>
+          <span style="text-align: right; font-weight: 800;">
+            {%- if p.prdctdn == "DUE" -%}DUE{%- else -%}{{ p.prdctdn }}{%- endif -%}
+          </span>
+        </div>
+      {%- endfor -%}
+    </div>
+  {%- endfor -%}
+{%- endif -%}
+
+{%- endif -%}{%- comment -%}/fairfax_ok branch{%- endcomment -%}
+      </div>
+    </div>
+
+    {%- comment -%}
+      Capital Bikeshare row.
+      The transform (Serverless tab) filters IDX_4 to just the user's configured
+      stations AND stamps each with `display_name` from cabi_station_names. So
+      the markup never reads cabi_station_* form fields directly — TRMNL doesn't
+      reliably expose form fields in the markup context (see EPL fix). Instead
+      we just iterate whatever the transform put in IDX_4.data.stations.
+    {%- endcomment -%}
+    {%- assign cabi_stations = IDX_4.data.stations -%}
+    {%- assign cabi_count = 0 -%}{%- if cabi_stations %}{%- assign cabi_count = cabi_stations.size -%}{% endif -%}
+    {%- if cabi_count > 0 -%}
+      <div class="cabi-row">
+        <div class="cabi-head">
+          <span class="cabi-badge">CaBi</span>
+          <span class="cabi-title">Capital Bikeshare</span>
+        </div>
+        {%- for st in cabi_stations -%}
+          <div class="cabi-station">
+            <span class="cabi-name">{{ st.display_name | default: st.station_id }}</span>
+            {%- if st._offline -%}
+              <span class="cabi-stat">station offline</span>
+            {%- else -%}
+              {%- assign total_bikes = st.num_bikes_available | default: 0 -%}
+              {%- assign ebikes = st.num_ebikes_available | default: 0 -%}
+              {%- assign normal_bikes = total_bikes | minus: ebikes -%}
+              {%- if normal_bikes < 0 -%}{%- assign normal_bikes = 0 -%}{%- endif -%}
+              {%- assign docks = st.num_docks_available | default: 0 -%}
+              <span class="cabi-stat"><strong>{{ normal_bikes }}</strong> bikes</span>
+              <span class="cabi-stat"><strong>{{ ebikes }}</strong> e-bikes</span>
+              <span class="cabi-stat"><strong>{{ docks }}</strong> docks</span>
+              {%- if docks == 0 -%}<span class="cabi-flag">FULL</span>{%- endif -%}
+              {%- if total_bikes == 0 -%}<span class="cabi-flag">EMPTY</span>{%- endif -%}
+              {%- if st.is_renting == 0 -%}<span class="cabi-flag">OUT OF SERVICE</span>{%- endif -%}
+            {%- endif -%}
+          </div>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+
+    {%- if total_alerts > 0 -%}
+      <div style="border-top: 2px solid var(--ink); padding: 8px 22px; font-size: 12px; line-height: 1.3;">
+        {{ rail_alerts }}
+        {%- for ba in bus_alerts limit: 2 -%}
+          <div class="alert-line"><strong>BUS</strong> · {{ ba.brf | default: ba.sbj | truncate: 160 }}</div>
+        {%- endfor -%}
+        {%- if total_alerts > 3 %}<div style="opacity: 0.6; margin-top: 2px;">+{{ total_alerts | minus: 3 }} more alerts</div>{% endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+{% endif %}

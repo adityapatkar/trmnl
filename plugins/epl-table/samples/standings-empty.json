@@ -1,0 +1,8 @@
+{
+  "filters": { "season": "2026" },
+  "competition": { "id": 2021, "name": "Premier League", "code": "PL", "type": "LEAGUE", "emblem": "https://crests.football-data.org/PL.png" },
+  "season": { "id": 2501, "startDate": "2026-08-15", "endDate": "2027-05-23", "currentMatchday": null, "winner": null },
+  "standings": [
+    { "stage": "REGULAR_SEASON", "type": "TOTAL", "group": null, "table": [] }
+  ]
+}

@@ -1,0 +1,206 @@
+<style>
+{% include_raw "plugins/_shared/styles.css" %}
+.body-2col { flex: 1; display: grid; grid-template-columns: 1fr 1fr; padding: 4px 16px 6px; min-height: 0; }
+.col-table { padding: 3px 4px; }
+.col-table.right { border-left: 1.5px solid var(--ink); padding-left: 10px; }
+table.standings { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; line-height: 1; }
+table.standings thead th { background: var(--ink); color: var(--bg); font-weight: 800; letter-spacing: 0.1em; font-size: 9px; padding: 3.5px 4px; text-align: right; }
+table.standings thead th.l { text-align: left; }
+table.standings thead th.c { text-align: center; }
+table.standings tbody td { padding: 2.5px 4px; border-bottom: 1px solid #eaeaea; text-align: right; line-height: 1; }
+table.standings tbody td.pos { text-align: center; font-weight: 800; width: 22px; position: relative; }
+table.standings tbody td.club { text-align: left; font-family: var(--sans); font-weight: 700; font-size: 11.5px; text-transform: none; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 145px; }
+table.standings tbody td.pts { font-weight: 900; width: 26px; }
+table.standings tbody tr.row-inv td { background: var(--ink); color: var(--bg); font-weight: 900; }
+table.standings tbody tr.qual td.pos::before { content: ''; position: absolute; left: 0; top: 2px; bottom: 2px; width: 3px; background: var(--ink); }
+table.standings tbody tr.playoff td.pos::before { content: ''; position: absolute; left: 0; top: 2px; bottom: 2px; width: 3px; background: #999; }
+table.standings tbody tr.cut-line td { border-bottom: 1.5px dashed #888; }
+.legend { padding: 4px 22px 6px; font-family: var(--mono); font-size: 10px; color: var(--ink-soft); letter-spacing: 0.08em; display: flex; gap: 18px; border-top: 1px solid var(--rule); }
+.legend .swatch { display: inline-block; width: 8px; height: 8px; background: var(--ink); margin-right: 5px; vertical-align: middle; }
+.legend .swatch.grey { background: #999; }
+.ucl-logo { width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--ink); color: var(--bg); border-radius: 50%; font-family: var(--sans); font-weight: 900; font-size: 13px; letter-spacing: 0.04em; }
+.bracket-grid { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 8px 16px; }
+.bracket-col { display: flex; flex-direction: column; gap: 5px; }
+.bracket-col h4 { margin: 0 0 4px; font-size: 10px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; padding-bottom: 3px; border-bottom: 1px solid var(--ink); }
+.tie { font-family: var(--mono); font-size: 11px; padding: 4px 6px; border: 1px solid var(--rule); display: grid; grid-template-columns: 1fr 38px; gap: 4px; align-items: center; }
+.tie .matchup { font-weight: 700; }
+.tie .stat { text-align: right; font-size: 9px; font-weight: 800; letter-spacing: 0.1em; color: var(--ink-soft); }
+.tie.highlight { background: var(--ink); color: var(--bg); }
+.tie.highlight .stat { color: var(--bg); opacity: 0.85; }
+</style>
+
+{%- comment -%}
+  Shape-based "missing API key" detection — see transit plugin for rationale.
+  football-data.org returns {standings:[...]} or {matches:[...]} on success; on
+  bad token returns {message:"..."} with no array.
+{%- endcomment -%}
+{%- if IDX_0.standings == nil and IDX_1.matches == nil -%}
+  <div class="screen"><div class="placeholder setup">
+    Couldn't load Champions League data. Check your football-data.org API key.
+    {% if IDX_0.message %}<br/><br/><small>{{ IDX_0.message }}</small>{% endif %}
+  </div></div>
+{%- elsif IDX_1.matches and IDX_1.matches.size > 0 -%}
+  {%- assign all_matches = IDX_1.matches -%}
+  {%- assign stages = "LAST_16,QUARTER_FINALS,SEMI_FINALS,FINAL" | split: "," -%}
+  {%- assign stage_labels = "Round of 16,Quarter-Finals,Semi-Finals,Final" | split: "," -%}
+
+  <div class="screen">
+    <div class="title-bar">
+      <div class="ucl-logo" aria-label="UEFA Champions League">UCL</div>
+      <div class="t-stack">
+        <span class="t">UEFA Champions League</span>
+        <span class="t-sub">Knockout phase</span>
+      </div>
+      <div class="meta">{{ now | date: "%H:%M" }}<br/><span style="opacity:0.6">refreshes 60m</span></div>
+    </div>
+    <div class="bracket-grid">
+      {%- for idx in (0..3) -%}
+        {%- assign st = stages[idx] -%}
+        {%- assign label = stage_labels[idx] -%}
+        {%- assign stage_matches = all_matches | where: "stage", st -%}
+        <div class="bracket-col">
+          <h4>{{ label }}</h4>
+          {%- assign seen_pairs = "" -%}
+          {%- for m in stage_matches -%}
+            {%- assign id_a = m.homeTeam.id -%}
+            {%- assign id_b = m.awayTeam.id -%}
+            {%- assign min_id = id_a | at_most: id_b -%}
+            {%- assign max_id = id_a | at_least: id_b -%}
+            {%- assign pair_key = min_id | append: "-" | append: max_id -%}
+            {%- unless seen_pairs contains pair_key -%}
+              {%- assign seen_pairs = seen_pairs | append: pair_key | append: "," -%}
+
+              {%- comment -%}Build a list of legs (both home/away orientations) by filtering stage_matches{%- endcomment -%}
+              {%- assign agg_min = 0 -%}{%- assign agg_max = 0 -%}{%- assign legs_done = 0 -%}{%- assign any_live = false -%}
+              {%- assign total_legs_count = 0 -%}
+              {%- assign min_tla = "" -%}{%- assign max_tla = "" -%}
+
+              {%- for lm in stage_matches -%}
+                {%- assign is_match = false -%}
+                {%- if lm.homeTeam.id == id_a and lm.awayTeam.id == id_b -%}{%- assign is_match = true -%}{%- endif -%}
+                {%- if lm.homeTeam.id == id_b and lm.awayTeam.id == id_a -%}{%- assign is_match = true -%}{%- endif -%}
+                {%- if is_match -%}
+                  {%- assign total_legs_count = total_legs_count | plus: 1 -%}
+                  {%- if lm.score.fullTime.home != nil -%}
+                    {%- if lm.homeTeam.id == min_id -%}
+                      {%- assign agg_min = agg_min | plus: lm.score.fullTime.home -%}
+                      {%- assign agg_max = agg_max | plus: lm.score.fullTime.away -%}
+                    {%- else -%}
+                      {%- assign agg_max = agg_max | plus: lm.score.fullTime.home -%}
+                      {%- assign agg_min = agg_min | plus: lm.score.fullTime.away -%}
+                    {%- endif -%}
+                    {%- assign legs_done = legs_done | plus: 1 -%}
+                  {%- endif -%}
+                  {%- if lm.status == "IN_PLAY" or lm.status == "PAUSED" -%}{%- assign any_live = true -%}{%- endif -%}
+                  {%- comment -%}Capture TLAs (from any leg){%- endcomment -%}
+                  {%- if lm.homeTeam.id == min_id -%}
+                    {%- assign min_tla = lm.homeTeam.tla -%}
+                    {%- assign max_tla = lm.awayTeam.tla -%}
+                  {%- else -%}
+                    {%- assign min_tla = lm.awayTeam.tla -%}
+                    {%- assign max_tla = lm.homeTeam.tla -%}
+                  {%- endif -%}
+                {%- endif -%}
+              {%- endfor -%}
+
+              {%- assign stat = "SCHED" -%}
+              {%- if any_live -%}{%- assign stat = "LIVE" -%}
+              {%- elsif legs_done == total_legs_count and legs_done > 0 -%}{%- assign stat = "FT" -%}
+              {%- elsif legs_done > 0 -%}{%- assign stat = "L" | append: legs_done -%}{%- endif -%}
+
+              {%- assign is_highlight = false -%}
+              {%- if min_id == highlight_team_id or max_id == highlight_team_id -%}{%- assign is_highlight = true -%}{%- endif -%}
+
+              <div class="tie{% if is_highlight %} highlight{% endif %}">
+                <span class="matchup">
+                  {{ min_tla }}
+                  {%- if legs_done > 0 %} {{ agg_min }} – {{ agg_max }} {% else %} vs {% endif -%}
+                  {{ max_tla }}
+                </span>
+                <span class="stat">{{ stat }}</span>
+              </div>
+            {%- endunless -%}
+          {%- endfor -%}
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+{%- else -%}
+  {%- assign rows = IDX_0.standings[0].table | default: empty -%}
+  {%- if rows == empty -%}
+    <div class="screen"><div class="placeholder">League phase data unavailable.</div></div>
+  {%- else -%}
+    {%- assign matchday = IDX_0.season.currentMatchday | default: "?" -%}
+    <div class="screen">
+      <div class="title-bar">
+        <div class="ucl-logo" aria-label="UEFA Champions League">UCL</div>
+        <div class="t-stack">
+          <span class="t">UEFA Champions League</span>
+          <span class="t-sub">{{ IDX_0.season.startDate | date: "%Y" }}–{{ IDX_0.season.endDate | date: "%y" }} · League Phase · MD {{ matchday }}</span>
+        </div>
+        <div class="meta">{{ now | date: "%H:%M" }}<br/><span style="opacity:0.6">refreshes 60m</span></div>
+      </div>
+      <div class="body-2col">
+        {%- assign left_rows = rows | slice: 0, 18 -%}
+        {%- assign right_rows = rows | slice: 18, 18 -%}
+        <div class="col-table">
+          <table class="standings">
+            <thead><tr><th class="c">#</th><th class="l">Club</th><th>GD</th><th>Pts</th></tr></thead>
+            <tbody>
+              {%- for r in left_rows -%}
+                {%- assign row_class = "" -%}
+                {%- if r.team.id == highlight_team_id -%}
+                  {%- assign row_class = "row-inv" -%}
+                {%- elsif r.position <= 8 -%}
+                  {%- assign row_class = "qual" -%}
+                {%- elsif r.position <= 24 -%}
+                  {%- assign row_class = "playoff" -%}
+                {%- endif -%}
+                {%- if r.position == 8 or r.position == 24 -%}
+                  {%- assign row_class = row_class | append: " cut-line" -%}
+                {%- endif -%}
+                <tr class="{{ row_class }}">
+                  <td class="pos">{{ r.position }}</td>
+                  <td class="club">{{ r.team.shortName | default: r.team.name }}</td>
+                  <td>{% if r.goalDifference >= 0 %}+{% endif %}{{ r.goalDifference }}</td>
+                  <td class="pts">{{ r.points }}</td>
+                </tr>
+              {%- endfor -%}
+            </tbody>
+          </table>
+        </div>
+        <div class="col-table right">
+          <table class="standings">
+            <thead><tr><th class="c">#</th><th class="l">Club</th><th>GD</th><th>Pts</th></tr></thead>
+            <tbody>
+              {%- for r in right_rows -%}
+                {%- assign row_class = "" -%}
+                {%- if r.team.id == highlight_team_id -%}
+                  {%- assign row_class = "row-inv" -%}
+                {%- elsif r.position <= 8 -%}
+                  {%- assign row_class = "qual" -%}
+                {%- elsif r.position <= 24 -%}
+                  {%- assign row_class = "playoff" -%}
+                {%- endif -%}
+                {%- if r.position == 8 or r.position == 24 -%}
+                  {%- assign row_class = row_class | append: " cut-line" -%}
+                {%- endif -%}
+                <tr class="{{ row_class }}">
+                  <td class="pos">{{ r.position }}</td>
+                  <td class="club">{{ r.team.shortName | default: r.team.name }}</td>
+                  <td>{% if r.goalDifference >= 0 %}+{% endif %}{{ r.goalDifference }}</td>
+                  <td class="pts">{{ r.points }}</td>
+                </tr>
+              {%- endfor -%}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="swatch"></span>Round of 16 (1–8)</span>
+        <span style="border-top:1.5px dashed #888;padding-top:2px;">R16 cutoff</span>
+        <span><span class="swatch grey"></span>Knockout playoffs (9–24)</span>
+      </div>
+    </div>
+  {%- endif -%}
+{%- endif -%}

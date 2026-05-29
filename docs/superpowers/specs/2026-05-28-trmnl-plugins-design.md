@@ -175,22 +175,22 @@ api_key={{ wmata_api_key }}
 | `wmata_station_name` | WMATA station display name     | *(blank — matches the chosen station)*             |
 | `fairfax_api_key`    | Fairfax BusTime API key        | *(blank — required)*                               |
 | `fairfax_stop_ids`   | Comma-separated stop IDs       | *(blank — set during setup, 2–3 nearest stops)*    |
-| `fairfax_base_url`   | BusTime API base URL           | `http://realtime.fairfaxcounty.gov/bustime/api/v3` |
+| `fairfax_base_url`   | BusTime API base URL           | `https://www.fairfaxcounty.gov/bustime/api/v3` |
 
-The transit plugin's two metro-direction labels (e.g., "Toward Largo / east" and "Toward Ashburn / west") are not hard-coded; they're derived from the `DirectionNum` and per-train `DestinationName` in the WMATA response, so the plugin labels itself correctly regardless of which station the user picks.
+The transit plugin's two metro-direction labels (e.g., "Toward Largo" and "Toward Ashburn") are not hard-coded; they're derived from the `Group` field (WMATA's "1"/"2" track identifier) and the most common `DestinationName` per group in the response, so the plugin labels itself correctly regardless of which station the user picks.
 
 ### Data shape
 
-- `IDX_0.Trains[]` — `Line` (line code: `"SV"`, `"OR"`, `"BL"`, `"RD"`, `"GR"`, `"YL"`), `Destination`, `DestinationName`, `LocationCode`, `Min` (number, `"ARR"`, `"BRD"`, or `"---"`), `DirectionNum` (`"1"` / `"2"`), `Car` (`"6"` or `"8"`).
+- `IDX_0.Trains[]` — `Line` (line code: `"SV"`, `"OR"`, `"BL"`, `"RD"`, `"GR"`, `"YL"`), `Destination`, `DestinationCode` (may be `null`), `DestinationName`, `LocationCode`, `LocationName`, `Min` (number, `"ARR"`, `"BRD"`, or `"---"`), `Group` (`"1"` or `"2"` — the WMATA-internal direction code; group 1 = one platform/track, group 2 = the other), `Car` (`"6"` or `"8"`).
 - `IDX_1["bustime-response"].prd[]` — `rt` (route), `rtdir` (direction), `des` (headsign), `stpnm` (stop name), `stpid`, `prdctdn` (countdown: `"DUE"` or minutes), `prdtm` (timestamp), `dyn` (delay flag).
 - `IDX_1["bustime-response"].error[]` — error objects when something fails.
 - `IDX_2.Incidents[]` — WMATA rail incidents: `IncidentID`, `Description`, `DateUpdated` (ISO), `IncidentType` (e.g., `"Alert"`, `"Delay"`), `LinesAffected` (string of semicolon-separated line codes — e.g., `"SV;OR;"`).
-- `IDX_3["bustime-response"]["service-bulletins"][]` — Fairfax service bulletins for the configured stops: `name`, `subject`, `brief` (short text), `detail` (long text), `priority` (`"Low"`/`"Medium"`/`"High"`), `service_affected[]` (objects scoping to specific routes/stops/direction).
+- `IDX_3["bustime-response"].sb[]` — Fairfax service bulletins for the configured stops. Field names are abbreviated (confirmed against live API): `nm` (name), `sbj` (subject), `brf` (brief, short text), `dtl` (detail, long text), `prty` (priority — `"Low"`/`"Medium"`/`"High"`), `srvc[]` (service affected — objects scoping to specific routes/stops/direction, with fields `rt`, `rtdir`, `stpid`, `cse`, `efct`).
 - `IDX_3["bustime-response"].error[]` — same error shape as predictions.
 
 ### Shaping logic
 
-- **Trains**: parse `Min` ("ARR"/"BRD" → 0). Sort ascending. Group by `DirectionNum` (1/2). For the direction label, take the most common `DestinationName` within each direction. Take first 4 per direction.
+- **Trains**: parse `Min` ("ARR"/"BRD" → 0). Sort ascending. Group by `Group` (WMATA's "1"/"2" track code). For the direction label, take the most common `DestinationName` within each group. Take first 4 per group.
 - **Buses**: parse `prdctdn` ("DUE" → 0). Sort ascending. Group by `stpid` (or `stpnm`). Take first 3–4 per stop.
 - **Rail alerts (filter to our lines)**: derive the set of line codes serving the configured station from the first `Trains` entry's `Line` field (every train at a single station shares that station's line(s)). Then keep only incidents whose `LinesAffected` contains any of those codes. Sort by `DateUpdated` descending. Truncate `Description` to ~120 chars for display.
 - **Bus alerts (filter to our stops)**: the `getservicebulletins?stpid=...` query already scopes server-side to bulletins for the configured stops. Sort by `priority` (High > Medium > Low) then by issuance time. Take the top 1–2 active bulletins. Use `brief` (or `subject` as fallback) for display.
@@ -232,7 +232,7 @@ Visual reference: `.superpowers/brainstorm/.../content/transit-layout-v2.html` (
 - WMATA `Trains` empty (late hours) → "No predictions" placeholder under each direction.
 - WMATA `Incidents` array empty (typical case) → alert footer collapsed; title-bar `⚠` indicator hidden.
 - Fairfax `bustime-response.error` populated → render `error[0].msg` in place of bus predictions.
-- Fairfax `service-bulletins` empty or `error` populated for the bulletins call → silently omit the bus alerts portion; rail alerts still render if present.
+- Fairfax `sb` empty or `error` populated for the bulletins call → silently omit the bus alerts portion; rail alerts still render if present.
 - `Min: "---"` renders as `"—"`.
 - WMATA `Incidents` returns an alert affecting only lines *not* serving the configured station (e.g., Red Line alert while we're showing Silver) → filtered out, footer collapsed accordingly.
 
@@ -363,7 +363,7 @@ Two-mode plugin: league-phase table during the autumn league rounds; knockout br
 
 ```
 https://api.football-data.org/v4/competitions/CL/standings
-https://api.football-data.org/v4/competitions/CL/matches?stage=PLAY_OFFS,LAST_16,QUARTER_FINALS,SEMI_FINALS,FINAL
+https://api.football-data.org/v4/competitions/CL/matches?stage=LAST_16,QUARTER_FINALS,SEMI_FINALS,FINAL
 ```
 
 URL 1 returns standings (table during league phase; bracket-shaped data afterward). URL 2 returns knockout-round matches (empty during league phase).
@@ -385,7 +385,7 @@ X-Auth-Token={{ football_data_api_key }}
 
 ### Data shape
 
-- `IDX_0.standings[0].stage` — `"LEAGUE_STAGE"` during league phase; later changes (e.g., `"ROUND_OF_16"`, `"FINAL"`) to reflect the current knockout stage.
+- `IDX_0.standings[0].stage` — `"GROUP_STAGE"` during league phase; later changes (e.g., `"ROUND_OF_16"`, `"FINAL"`) to reflect the current knockout stage.
 - `IDX_0.standings[0].table[]` — rows during league phase: `position`, `team` (`id`, `shortName`, `tla`, `crest`), `playedGames`, `won`, `draw`, `lost`, `goalsFor`, `goalsAgainst`, `goalDifference`, `points`, `form`.
 - `IDX_1.matches[]` — knockout matches when applicable: `id`, `stage` (`"PLAY_OFFS"`, `"LAST_16"`, …), `status` (`"SCHEDULED"`, `"IN_PLAY"`, `"FINISHED"`, etc.), `utcDate`, `homeTeam.{tla,crest}`, `awayTeam.{tla,crest}`, `score.fullTime.{home,away}`, plus `aggregateScore` or similar across legs (the v4 API exposes ties as separate match objects per leg — we sum/match them in Liquid).
 
@@ -539,7 +539,7 @@ Visual reference: `.superpowers/brainstorm/.../content/epl-layout-v2.html`.
    - football-data.org: register at `football-data.org`, copy the X-Auth-Token from the dashboard.
 3. **Provide your lat/long** (the location the transit plugin centers on — e.g., home, office). Use it to look up:
    - The nearest WMATA station code (use `https://api.wmata.com/Rail.svc/json/jStations` with your API key, then pick the closest by lat/long math, or use the WMATA station map at `wmata.com/rider-tools/`).
-   - 2–3 nearest Fairfax Connector stop IDs (use `https://realtime.fairfaxcounty.gov/bustime/api/v3/getstops?key=<KEY>&rt=<route>&dir=<direction>&format=json`, iterating per nearby route, or use the BusTracker web UI to spot stops on a map).
+   - 2–3 nearest Fairfax Connector stop IDs (use `https://www.fairfaxcounty.gov/bustime/api/v3/getstops?key=<KEY>&rt=<route>&dir=<direction>&format=json`, iterating per nearby route, or use the BusTracker web UI to spot stops on a map).
 4. Fill those values into the transit plugin's form fields (`wmata_station_code`, `wmata_station_name`, `fairfax_stop_ids`).
 5. **Create the four plugins in TRMNL admin** in order: transit, man-utd-fixture, ucl-table, epl-table. For each:
    - Strategy = Polling.
@@ -556,11 +556,11 @@ Visual reference: `.superpowers/brainstorm/.../content/epl-layout-v2.html`.
 - **Assumption**: user has a TRMNL device + Developer Perks. If not: setup doc adds a step.
 - **Assumption**: Wikipedia commons URLs for PL / UCL / WMATA "M" logos are stable. Fallback: bundle local SVG copies in the plugin folders.
 - **Open**: user will provide actual lat/long during setup; the design intentionally doesn't bake any specific location into the plugin code. The Tysons references in earlier mockups were placeholder mock data only.
-- **Open**: Fairfax BusTime base URL — `realtime.fairfaxcounty.gov` is the documented host but BusTime endpoints sometimes redirect to https. Confirm and pin in setup.
+- **Resolved**: Fairfax BusTime base URL is `https://www.fairfaxcounty.gov/bustime/api/v3`. The `realtime.fairfaxcounty.gov` hostname referenced in earlier docs/community examples does not resolve.
 - **Verify (implementation)**: football-data.org v4 status filter syntax. Spec assumes `status=LIVE` aliases `IN_PLAY,PAUSED`. If not, fall back to two URLs.
-- **Verify (implementation)**: UCL stage enumeration strings (`LEAGUE_STAGE`, `PLAY_OFFS`, `LAST_16`, `QUARTER_FINALS`, `SEMI_FINALS`, `FINAL`). UEFA's 2024-25 reformat introduced a 24-team knockout playoff round; football-data.org's label for it needs confirmation.
+- **Verify (implementation)**: UCL stage enumeration strings (`GROUP_STAGE`, `PLAY_OFFS`, `LAST_16`, `QUARTER_FINALS`, `SEMI_FINALS`, `FINAL`). UEFA's 2024-25 reformat introduced a 24-team knockout playoff round; football-data.org's label for it needs confirmation.
 - **Verify (implementation)**: WMATA `Incidents.svc` `LinesAffected` format is the documented semicolon-trailing string (e.g., `"SV;OR;"`) — string-contains check is the assumed filter mechanism.
-- **Verify (implementation)**: Fairfax `getservicebulletins` response shape — the spec assumes `bustime-response.service-bulletins[]` with `name/subject/brief/detail/priority/service_affected` fields per the Clever Devices BusTime v3 docs. If actual response uses a different key (e.g., `sb` instead of `service-bulletins`), templates need a tweak.
+- **Resolved**: Fairfax `getservicebulletins` uses abbreviated field names (`sb`, `nm`, `sbj`, `brf`, `dtl`, `prty`, `srvc`) — confirmed against the live API. Spec and templates updated to match.
 
 ## Reference: brainstorm mockups
 

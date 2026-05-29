@@ -607,7 +607,7 @@ Create `plugins/transit/form-fields.json` (used only by the local test harness; 
   "wmata_station_name": "Tysons",
   "fairfax_api_key": "test-key-not-used-in-render",
   "fairfax_stop_ids": "1001,1002",
-  "fairfax_base_url": "http://realtime.fairfaxcounty.gov/bustime/api/v3"
+  "fairfax_base_url": "https://www.fairfaxcounty.gov/bustime/api/v3"
 }
 ```
 
@@ -636,7 +636,7 @@ Use `getstops` to find stops near Tysons (e.g., on routes 423, 462). Example for
 
 ```bash
 FFX_KEY="<your-key>"
-curl -s "http://realtime.fairfaxcounty.gov/bustime/api/v3/getstops?key=$FFX_KEY&rt=423&dir=INBOUND&format=json"
+curl -s "https://www.fairfaxcounty.gov/bustime/api/v3/getstops?key=$FFX_KEY&rt=423&dir=INBOUND&format=json"
 ```
 
 Pick 2 stop IDs near Tysons Corner. Note them (e.g., `1001,1002`). Update `plugins/transit/form-fields.json` to use the real IDs.
@@ -644,7 +644,7 @@ Pick 2 stop IDs near Tysons Corner. Note them (e.g., `1001,1002`). Update `plugi
 - [ ] **Step 3: Capture the live predictions response**
 
 ```bash
-curl -s "http://realtime.fairfaxcounty.gov/bustime/api/v3/getpredictions?key=$FFX_KEY&stpid=1001,1002&format=json" \
+curl -s "https://www.fairfaxcounty.gov/bustime/api/v3/getpredictions?key=$FFX_KEY&stpid=1001,1002&format=json" \
   > plugins/transit/samples/fairfax-predictions.json
 ```
 
@@ -717,25 +717,25 @@ Create `plugins/transit/samples/wmata-incidents-empty.json`:
 - [ ] **Step 3: Capture Fairfax bulletins**
 
 ```bash
-curl -s "http://realtime.fairfaxcounty.gov/bustime/api/v3/getservicebulletins?key=$FFX_KEY&stpid=1001,1002&format=json" \
+curl -s "https://www.fairfaxcounty.gov/bustime/api/v3/getservicebulletins?key=$FFX_KEY&stpid=1001,1002&format=json" \
   > plugins/transit/samples/fairfax-bulletins.json
 ```
 
-Confirm structure. The Clever Devices BusTime v3 docs specify `{"bustime-response": {"service-bulletins": [{...}]}}` with each bulletin having `name`, `subject`, `brief`, `detail`, `priority`, `service_affected[]`.
+Confirm structure. Despite the BusTime v3 docs documenting field names like `service-bulletins`, `name`, `subject`, `brief`, `detail`, `priority`, `service_affected[]`, the live Fairfax API returns **abbreviated names**: array `sb` with each bulletin having `nm`, `sbj`, `brf`, `dtl`, `prty`, `srvc[]` (with `rt`, `rtdir`, `stpid`, `cse`, `efct`).
 
-If empty, create a synthetic test fixture matching that shape:
+If empty, create a synthetic test fixture matching the actual abbreviated shape:
 ```bash
 cat > plugins/transit/samples/fairfax-bulletins.json <<'EOF'
 {
   "bustime-response": {
-    "service-bulletins": [
+    "sb": [
       {
-        "name": "ROUTE_423_DETOUR_20260528",
-        "subject": "Route 423 detour",
-        "brief": "Route 423 buses are detouring around Tysons Blvd due to roadwork until 18:00.",
-        "detail": "Tysons Blvd is closed between Greensboro Drive and Westpark Drive. Affected stops are being skipped; nearest alternate is Westpark Pl + International Dr.",
-        "priority": "High",
-        "service_affected": [{ "rt": "423", "stpid": "1001" }]
+        "nm": "ROUTE_423_DETOUR_20260528",
+        "sbj": "Route 423 detour",
+        "brf": "Route 423 buses are detouring around Tysons Blvd due to roadwork until 18:00.",
+        "dtl": "Tysons Blvd is closed between Greensboro Drive and Westpark Drive. Affected stops are being skipped; nearest alternate is Westpark Pl + International Dr.",
+        "prty": "High",
+        "srvc": [{ "rt": "423", "stpid": "1001" }]
       }
     ]
   }
@@ -747,7 +747,7 @@ EOF
 
 Create `plugins/transit/samples/fairfax-bulletins-empty.json`:
 ```json
-{ "bustime-response": { "service-bulletins": [] } }
+{ "bustime-response": { "sb": [] } }
 ```
 
 - [ ] **Step 5: Commit**
@@ -910,10 +910,10 @@ test('renders LN / CAR / DEST / MIN header row for metro', async () => {
   assert.match(html, /LN[\s\S]*CAR[\s\S]*DEST[\s\S]*MIN/);
 });
 
-test('renders direction dividers derived from DirectionNum + destinations', async () => {
+test('renders direction dividers derived from Group + destinations', async () => {
   const html = await renderAll();
   // From the captured fixture, expect at least one direction label
-  assert.match(html, /(Largo|Ashburn|Wiehle|Downtown|Mt Vernon|New Carrollton)/i);
+  assert.match(html, /(Largo|Ashburn|Wiehle|Downtown|Mt Vernon|New Carrollton|NewCrlton)/i);
 });
 
 test('renders ARR / BRD / numeric minutes correctly', async () => {
@@ -950,8 +950,8 @@ Replace the `<div style="padding: 12px 22px; flex: 1;">` placeholder inside `plu
 <div style="display: grid; grid-template-columns: 1.05fr 1fr; flex: 1; min-height: 0;">
   <div style="padding: 12px 18px;">
     {%- assign trains = IDX_0.Trains | default: empty -%}
-    {%- assign east = trains | where: "DirectionNum", "2" -%}
-    {%- assign west = trains | where: "DirectionNum", "1" -%}
+    {%- assign east = trains | where: "Group", "1" -%}
+    {%- assign west = trains | where: "Group", "2" -%}
 
     <div class="dark-strip" style="display: grid; grid-template-columns: 34px 40px 1fr 50px; gap: 6px;">
       <span style="text-align: center;">LN</span>
@@ -966,11 +966,11 @@ Replace the `<div style="padding: 12px 22px; flex: 1;">` placeholder inside `plu
       {%- for dirset in "east,west" | split: "," -%}
         {%- if dirset == "east" -%}
           {%- assign rows = east -%}
-          {%- assign label_dest = east | map: "DestinationName" | first | default: "East" -%}
+          {%- assign label_dest = east | map: "DestinationName" | first | default: "Inbound" -%}
           {%- assign dir_label = "Toward " | append: label_dest -%}
         {%- else -%}
           {%- assign rows = west -%}
-          {%- assign label_dest = west | map: "DestinationName" | first | default: "West" -%}
+          {%- assign label_dest = west | map: "DestinationName" | first | default: "Outbound" -%}
           {%- assign dir_label = "Toward " | append: label_dest -%}
         {%- endif -%}
 
@@ -1235,7 +1235,7 @@ Standard Liquid has no array `.push`, so we build the rendered alert HTML using 
   {%- endfor -%}
 {%- endcapture -%}
 
-{%- assign bus_alerts = IDX_3["bustime-response"]["service-bulletins"] | default: empty -%}
+{%- assign bus_alerts = IDX_3["bustime-response"].sb | default: empty -%}
 {%- assign bus_alert_count = bus_alerts.size -%}
 {%- assign total_alerts = rail_alert_count | plus: bus_alert_count -%}
 ```
@@ -1259,7 +1259,7 @@ And add the **alerts footer** at the bottom of the screen (just before the closi
   <div style="border-top: 2px solid var(--ink); padding: 8px 22px; font-size: 12px; line-height: 1.3;">
     {{ rail_alerts }}
     {%- for ba in bus_alerts limit: 2 -%}
-      <div class="alert-line"><strong>BUS</strong> · {{ ba.brief | default: ba.subject | truncate: 160 }}</div>
+      <div class="alert-line"><strong>BUS</strong> · {{ ba.brf | default: ba.sbj | truncate: 160 }}</div>
     {%- endfor -%}
     {%- if total_alerts > 3 %}<div style="opacity: 0.6; margin-top: 2px;">+{{ total_alerts | minus: 3 }} more alerts</div>{% endif -%}
   </div>
@@ -1342,7 +1342,7 @@ WMATA next-trains + Fairfax Connector next-buses + service alerts, on a single 8
    | `wmata_station_name` | WMATA station display name     | yes      | `Tysons`                                           |
    | `fairfax_api_key`    | Fairfax BusTime API key        | yes      | (from fairfaxcounty.gov)                           |
    | `fairfax_stop_ids`   | Comma-separated stop IDs       | yes      | `1001,1002`                                        |
-   | `fairfax_base_url`   | BusTime API base URL           | yes      | `http://realtime.fairfaxcounty.gov/bustime/api/v3` |
+   | `fairfax_base_url`   | BusTime API base URL           | yes      | `https://www.fairfaxcounty.gov/bustime/api/v3` |
 
 5. **Refresh interval**: 5 minutes.
 
@@ -1921,7 +1921,7 @@ curl -s -H "X-Auth-Token: $FD_TOKEN" \
   > plugins/ucl-table/samples/standings-league-phase.json
 ```
 
-Inspect. Expect `{ "standings": [ { "stage": "LEAGUE_STAGE", "type": "TOTAL", "group": null, "table": [ ... ] } ], "season": {...}, "competition": {...} }`.
+Inspect. Expect `{ "standings": [ { "stage": "GROUP_STAGE", "type": "TOTAL", "group": null, "table": [ ... ] } ], "season": {...}, "competition": {...} }`.
 
 If the response shows a knockout stage instead (depending on time of year), save the file but **also** synthesize a league-phase version by copying any prior season's structure with the league-phase teams.
 
@@ -2742,9 +2742,9 @@ Compute distance to each station's `Lat`/`Lon`; pick the closest. Record the `Co
 The simplest approach is the BusTracker web UI at https://www.fairfaxcounty.gov/bustime/home.jsp — drop a pin near your location and read off the stop IDs. Or use the API:
 ```bash
 FFX_KEY="<your-key>"
-curl -s "http://realtime.fairfaxcounty.gov/bustime/api/v3/getroutes?key=$FFX_KEY&format=json"
+curl -s "https://www.fairfaxcounty.gov/bustime/api/v3/getroutes?key=$FFX_KEY&format=json"
 # Pick a route number that serves your area, then:
-curl -s "http://realtime.fairfaxcounty.gov/bustime/api/v3/getstops?key=$FFX_KEY&rt=<RT>&dir=INBOUND&format=json"
+curl -s "https://www.fairfaxcounty.gov/bustime/api/v3/getstops?key=$FFX_KEY&rt=<RT>&dir=INBOUND&format=json"
 # Look for stops whose lat/lng are near yours
 ```
 Pick 2–3 nearby stops. Record their IDs (e.g., `1001,1002`).

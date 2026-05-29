@@ -1,0 +1,10 @@
+# TRMNL admin form-builder definition for the Man Utd next-fixture / live plugin.
+# Paste this YAML into the plugin's "Form Fields" section in the TRMNL admin.
+#
+# `form-fields.json` (sibling file) is for the local Node.js test harness only.
+
+- keyname: football_data_api_key
+  field_type: password
+  name: football-data.org API key
+  description: Free token from <a href="https://www.football-data.org/client/register">football-data.org/client/register</a>.
+  help_text: This token is the value of the <code>X-Auth-Token</code> header football-data.org accepts; both Premier League and Champions League data are free for personal use.
