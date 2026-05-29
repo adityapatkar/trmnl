@@ -92,3 +92,33 @@ test('renders Fairfax error message when bustime-response.error is set', async (
   const html = await renderAll({ buses: 'fairfax-predictions-error' });
   assert.match(html, /No service scheduled/i);
 });
+
+test('renders rail alert footer when WMATA Incidents has matching lines', async () => {
+  const html = await renderAll({ incidents: 'wmata-incidents' });
+  assert.match(html, /Single-tracking/i);
+});
+
+test('hides alert footer when all incidents are for non-matching lines', async () => {
+  const html = await renderAll({
+    incidents: 'wmata-incidents',
+    // Pretend our station is RED (not SV) — Silver-only alerts should filter out.
+    form: { wmata_station_code: 'A11', wmata_station_name: 'Test Station' },
+    predictions: 'wmata-predictions-empty',
+  });
+  assert.doesNotMatch(html, /Single-tracking/i);
+});
+
+test('renders bus bulletin in the footer when getservicebulletins returns one', async () => {
+  const html = await renderAll({ bulletins: 'fairfax-bulletins' });
+  assert.match(html, /detour|disrupted|delay|reroute|construction/i);
+});
+
+test('shows the title-bar warning indicator when alerts are present', async () => {
+  const html = await renderAll({ incidents: 'wmata-incidents' });
+  assert.match(html, /⚠/);
+});
+
+test('hides the title-bar warning indicator when no alerts', async () => {
+  const html = await renderAll(); // both empty by default
+  assert.doesNotMatch(html, /⚠/);
+});
