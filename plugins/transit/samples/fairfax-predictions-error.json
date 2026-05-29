@@ -1,0 +1,8 @@
+{
+  "bustime-response": {
+    "error": [
+      { "stpid": "6307", "msg": "No service scheduled" },
+      { "stpid": "6360", "msg": "No service scheduled" }
+    ]
+  }
+}

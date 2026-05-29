@@ -1,0 +1,66 @@
+{
+	"bustime-response": {
+		"prd": [
+			{
+				"tmstmp": "20260528 22:09",
+				"typ": "A",
+				"stpnm": "TYSONS BLVD @ GALLERIA AT TYSONS II",
+				"stpid": "6360",
+				"vid": "7704",
+				"dstp": 24073,
+				"rt": "463",
+				"rtdd": "463",
+				"rtdir": "North",
+				"des": "Tysons Cnr, Maple Ave",
+				"prdtm": "20260528 22:25",
+				"tablockid": "4634463",
+				"tatripid": "1587753",
+				"dly": false,
+				"dyn": 0,
+				"prdctdn": "15",
+				"zone": "",
+				"nbus": ""
+			},
+			{
+				"tmstmp": "20260528 22:09",
+				"typ": "D",
+				"stpnm": "TYSONS CORNER METRO BAY A",
+				"stpid": "6307",
+				"vid": "7704",
+				"dstp": 26884,
+				"rt": "463",
+				"rtdd": "463",
+				"rtdir": "South",
+				"des": "Vienna Metro, Maple Ave",
+				"prdtm": "20260528 22:30",
+				"tablockid": "4634463",
+				"tatripid": "1587794",
+				"dly": false,
+				"dyn": 0,
+				"prdctdn": "19",
+				"zone": "",
+				"nbus": ""
+			},
+			{
+				"tmstmp": "20260528 22:10",
+				"typ": "A",
+				"stpnm": "TYSONS BLVD @ GALLERIA AT TYSONS II",
+				"stpid": "6360",
+				"vid": "",
+				"dstp": 0,
+				"rt": "463",
+				"rtdd": "463",
+				"rtdir": "North",
+				"des": "Tysons Cnr, Maple Ave",
+				"prdtm": "20260528 22:47",
+				"tablockid": "4631463",
+				"tatripid": "1587752",
+				"dly": false,
+				"dyn": 0,
+				"prdctdn": "37",
+				"zone": "",
+				"nbus": ""
+			}
+		]
+	}
+}

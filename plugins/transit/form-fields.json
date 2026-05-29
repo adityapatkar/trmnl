@@ -3,6 +3,6 @@
   "wmata_station_code": "N02",
   "wmata_station_name": "Tysons",
   "fairfax_api_key": "test-key-not-used-in-render",
-  "fairfax_stop_ids": "TBD",
-  "fairfax_base_url": "http://realtime.fairfaxcounty.gov/bustime/api/v3"
+  "fairfax_stop_ids": "6307,6360",
+  "fairfax_base_url": "https://www.fairfaxcounty.gov/bustime/api/v3"
 }
