@@ -1,0 +1,17 @@
+# Visual-companion / brainstorm session artifacts (local only)
+.superpowers/
+
+# macOS
+.DS_Store
+
+# Editor
+.idea/
+.vscode/
+
+# Environment / secrets (in case anything gets staged here by accident)
+.env
+.env.*
+*.local
+
+# Plugin export backups can contain API keys (TRMNL bakes form-field values in)
+plugins/*/plugin-export.json
