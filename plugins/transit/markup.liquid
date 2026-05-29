@@ -20,8 +20,58 @@
         <span style="opacity:0.6">refreshes 5m</span>
       </div>
     </div>
-    <div style="padding: 12px 22px; flex: 1;">
-      <!-- predictions go here in next task -->
+    <div style="display: grid; grid-template-columns: 1.05fr 1fr; flex: 1; min-height: 0;">
+      <div style="padding: 12px 18px;">
+        {%- assign trains = IDX_0.Trains -%}
+        {%- assign first_train = trains | first -%}
+        {%- assign east = trains | where: "Group", "1" -%}
+        {%- assign west = trains | where: "Group", "2" -%}
+        {%- assign dirsets = "east,west" | split: "," -%}
+
+        <div class="dark-strip" style="display: grid; grid-template-columns: 34px 40px 1fr 50px; gap: 6px;">
+          <span style="text-align: center;">LN</span>
+          <span style="text-align: center;">CAR</span>
+          <span>DEST</span>
+          <span style="text-align: right;">MIN</span>
+        </div>
+
+        {%- unless first_train -%}
+          <div style="padding: 24px 8px; text-align: center; color: var(--ink-soft);">No predictions right now.</div>
+        {%- endunless -%}
+        {%- if first_train -%}
+          {%- for dirset in dirsets -%}
+            {%- if dirset == "east" -%}
+              {%- assign rows = east -%}
+              {%- assign label_dest = east | map: "DestinationName" | first | default: "Inbound" -%}
+              {%- assign dir_label = "Toward " | append: label_dest -%}
+            {%- else -%}
+              {%- assign rows = west -%}
+              {%- assign label_dest = west | map: "DestinationName" | first | default: "Outbound" -%}
+              {%- assign dir_label = "Toward " | append: label_dest -%}
+            {%- endif -%}
+
+            {%- if rows.size > 0 -%}
+              <div style="background: var(--bg-shade); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 3px 8px; font-family: var(--mono); font-size: 10px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; margin-top: 6px;">
+                ▸ {{ dir_label }}
+              </div>
+              {%- for t in rows limit: 4 -%}
+                <div style="display: grid; grid-template-columns: 34px 40px 1fr 50px; gap: 6px; padding: 5px 8px; border-bottom: 1px solid var(--rule-soft); font-family: var(--mono); font-size: 15px; font-weight: 700; align-items: center; line-height: 1;">
+                  <span style="background: var(--ink); color: var(--bg); text-align: center; padding: 3px 0; font-size: 11px; font-weight: 900; letter-spacing: 0.06em; border-radius: 2px;">{{ t.Line }}</span>
+                  <span style="text-align: center; font-weight: 800;">{{ t.Car | default: "-" }}</span>
+                  <span style="text-transform: uppercase;">{{ t.DestinationName }}</span>
+                  <span style="text-align: right; font-weight: 800;">
+                    {%- if t.Min == "---" -%}—{%- else -%}{{ t.Min }}{%- endif -%}
+                  </span>
+                </div>
+              {%- endfor -%}
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+      </div>
+
+      <div style="padding: 12px 18px; border-left: 2px solid var(--ink);">
+        <!-- bus column in next task -->
+      </div>
     </div>
   </div>
 {% endif %}
