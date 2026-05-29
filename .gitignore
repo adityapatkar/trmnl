@@ -1,6 +1,9 @@
 # Visual-companion / brainstorm session artifacts (local only)
 .superpowers/
 
+# Dependencies
+node_modules/
+
 # macOS
 .DS_Store
 
