@@ -53,25 +53,34 @@ test('marks the top 2 teams of each group as qualifying (▸)', async () => {
   assert.ok(qualRows >= 20, `expected ~24 qual rows, got ${qualRows}`);
 });
 
-test('stays in group-stage view when knockout matches are placeholders (TBD teams)', async () => {
-  // Before the group stage ends, football-data.org returns 16 TIMED knockout
-  // matches with null teams. We should still show the group grid in this case.
-  const html = await render({ knockout: 'knockout-matches' });
+// 2026 WC group stage runs Jun 11–27; the earliest R16 in the API fixture is
+// 2026-07-04T17:00:00Z. Tests pin `now` on either side of that line.
+const DURING_GROUP_STAGE = new Date('2026-06-14T12:00:00Z');
+const KNOCKOUT_DAY = new Date('2026-07-04T18:00:00Z');
+
+test('stays in group-stage view during the group stage (now < first knockout match)', async () => {
+  const html = await render({ knockout: 'knockout-matches', now: DURING_GROUP_STAGE });
   assert.match(html, /Group stage/i);
   assert.doesNotMatch(html, /Knockout phase/i);
 });
 
-test('switches to knockout bracket view when knockout matches have real teams', async () => {
-  const html = await render({ knockout: 'knockout-matches-active' });
+test('stays in group view even when API populates TLAs early — date is what matters', async () => {
+  // Teams drawn but R16 hasn't kicked off yet
+  const html = await render({ knockout: 'knockout-matches-active', now: DURING_GROUP_STAGE });
+  assert.match(html, /Group stage/i);
+  assert.doesNotMatch(html, /Knockout phase/i);
+});
+
+test('switches to knockout bracket on the day the first R16 match starts', async () => {
+  const html = await render({ knockout: 'knockout-matches-active', now: KNOCKOUT_DAY });
   assert.match(html, /Knockout phase/i);
   assert.match(html, /ROUND OF 16/i);
   assert.match(html, /QUARTER-?FINALS/i);
 });
 
-test('renders ties with real TLAs in knockout view (not TBD)', async () => {
-  const html = await render({ knockout: 'knockout-matches-active' });
+test('renders real TLAs in knockout view (USA / MEX in the active fixture)', async () => {
+  const html = await render({ knockout: 'knockout-matches-active', now: KNOCKOUT_DAY });
   assert.match(html, /class="tie/);
-  // The active fixture has USA, MEX, ARG, BRA etc. in R16
   assert.match(html, /\bUSA\b/);
   assert.match(html, /\bMEX\b/);
 });

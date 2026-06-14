@@ -41,18 +41,26 @@ table.gtable tr.qual td.pos::before { content: '▸'; color: var(--ink); }
 {%- assign err_msg = IDX_0.message | default: message -%}
 
 {%- comment -%}
-  football-data.org pre-populates the 16 knockout matches as TIMED placeholders
-  with null teams BEFORE the group stage ends — so size>0 alone is too coarse.
-  Switch to bracket view only when at least one knockout match has a real team
-  populated (TLA non-null) OR has progressed past TIMED.
+  Date-based mode detection: switch to bracket view on the day the first
+  knockout match kicks off. football-data.org pre-populates the 16 R16
+  matches with their utcDate set well in advance, so we use the earliest
+  knockout utcDate as the cutoff. ISO strings sort lexicographically so a
+  string compare is correct without any epoch conversion.
+  (Teams being populated isn't sufficient — the API can fill TLAs early as
+  group standings settle, before knockout play actually begins.)
 {%- endcomment -%}
 {%- assign knockout_active = false -%}
 {%- if IDX_1.matches and IDX_1.matches.size > 0 -%}
+  {%- assign now_iso = now | date: "%Y-%m-%dT%H:%M:%SZ" -%}
+  {%- assign earliest_iso = "9999" -%}
   {%- for m in IDX_1.matches -%}
-    {%- if m.homeTeam.tla != nil or m.awayTeam.tla != nil or m.status == "FINISHED" or m.status == "IN_PLAY" or m.status == "PAUSED" -%}
-      {%- assign knockout_active = true -%}
+    {%- if m.utcDate != nil and m.utcDate < earliest_iso -%}
+      {%- assign earliest_iso = m.utcDate -%}
     {%- endif -%}
   {%- endfor -%}
+  {%- if now_iso >= earliest_iso -%}
+    {%- assign knockout_active = true -%}
+  {%- endif -%}
 {%- endif -%}
 
 {%- if std == nil -%}
