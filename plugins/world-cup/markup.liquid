@@ -39,12 +39,28 @@ table.gtable tr.qual td.pos::before { content: '▸'; color: var(--ink); }
 {%- assign std = IDX_0.standings | default: standings -%}
 {%- assign ssn = IDX_0.season | default: season -%}
 {%- assign err_msg = IDX_0.message | default: message -%}
+
+{%- comment -%}
+  football-data.org pre-populates the 16 knockout matches as TIMED placeholders
+  with null teams BEFORE the group stage ends — so size>0 alone is too coarse.
+  Switch to bracket view only when at least one knockout match has a real team
+  populated (TLA non-null) OR has progressed past TIMED.
+{%- endcomment -%}
+{%- assign knockout_active = false -%}
+{%- if IDX_1.matches and IDX_1.matches.size > 0 -%}
+  {%- for m in IDX_1.matches -%}
+    {%- if m.homeTeam.tla != nil or m.awayTeam.tla != nil or m.status == "FINISHED" or m.status == "IN_PLAY" or m.status == "PAUSED" -%}
+      {%- assign knockout_active = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+
 {%- if std == nil -%}
   <div class="screen"><div class="placeholder setup">
     Couldn't load World Cup data. Check your football-data.org API key.
     {% if err_msg %}<br/><br/><small>{{ err_msg }}</small>{% endif %}
   </div></div>
-{%- elsif IDX_1.matches and IDX_1.matches.size > 0 -%}
+{%- elsif knockout_active -%}
   {%- assign all_matches = IDX_1.matches -%}
   {%- assign stages = "LAST_16,QUARTER_FINALS,SEMI_FINALS,THIRD_PLACE,FINAL" | split: "," -%}
   {%- assign stage_labels = "Round of 16,Quarter-Finals,Semi-Finals,3rd Place,Final" | split: "," -%}

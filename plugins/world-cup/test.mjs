@@ -53,19 +53,27 @@ test('marks the top 2 teams of each group as qualifying (▸)', async () => {
   assert.ok(qualRows >= 20, `expected ~24 qual rows, got ${qualRows}`);
 });
 
-test('switches to knockout bracket view when LAST_16+ matches are present', async () => {
+test('stays in group-stage view when knockout matches are placeholders (TBD teams)', async () => {
+  // Before the group stage ends, football-data.org returns 16 TIMED knockout
+  // matches with null teams. We should still show the group grid in this case.
   const html = await render({ knockout: 'knockout-matches' });
+  assert.match(html, /Group stage/i);
+  assert.doesNotMatch(html, /Knockout phase/i);
+});
+
+test('switches to knockout bracket view when knockout matches have real teams', async () => {
+  const html = await render({ knockout: 'knockout-matches-active' });
   assert.match(html, /Knockout phase/i);
   assert.match(html, /ROUND OF 16/i);
   assert.match(html, /QUARTER-?FINALS/i);
 });
 
-test('renders ties with TLA pairs in knockout view', async () => {
-  const html = await render({ knockout: 'knockout-matches' });
-  // At least one tie should be present
+test('renders ties with real TLAs in knockout view (not TBD)', async () => {
+  const html = await render({ knockout: 'knockout-matches-active' });
   assert.match(html, /class="tie/);
-  // TLAs are 3-letter codes (TBD if not yet drawn)
-  assert.match(html, /[A-Z]{3}/);
+  // The active fixture has USA, MEX, ARG, BRA etc. in R16
+  assert.match(html, /\bUSA\b/);
+  assert.match(html, /\bMEX\b/);
 });
 
 test('falls back to setup placeholder when API key is auth-broken', async () => {
