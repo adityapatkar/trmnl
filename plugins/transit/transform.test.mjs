@@ -99,3 +99,10 @@ test('uses station_id as display_name when cabi_station_names is blank', async (
   const out = transform(input);
   assert.equal(out.IDX_4.data.stations[0].display_name, out.IDX_4.data.stations[0].station_id);
 });
+
+test('stamps updated_at as an Eastern-time string with EST or EDT suffix', async () => {
+  const out = transform(await makeInput());
+  assert.ok(out.updated_at, 'updated_at should be set');
+  // Format example: "11:47 PM EDT" / "8:03 AM EST"
+  assert.match(out.updated_at, /^\d{1,2}:\d{2}\s+(?:AM|PM)\s+E[SD]T$/);
+});

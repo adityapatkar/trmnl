@@ -53,7 +53,9 @@
       {%- endfor -%}
       {%- if matched -%}
         {%- assign rail_alert_count = rail_alert_count | plus: 1 -%}
-        <div class="alert-line"><strong>{{ t | upcase }}</strong> · {{ inc.Description | truncate: 160 }} <span style="opacity:0.6">(updated {{ inc.DateUpdated | date: "%H:%M" }})</span></div>
+        {%- if rail_alert_count <= 2 -%}
+          <div class="alert-line"><strong>{{ t | upcase }}</strong> · {{ inc.Description | truncate: 140 }} <span style="opacity:0.6">(updated {{ inc.DateUpdated | date: "%H:%M" }})</span></div>
+        {%- endif -%}
       {%- endif -%}
     {%- endfor -%}
   {%- endcapture -%}
@@ -72,12 +74,12 @@
         </span>
       </div>
       <div class="meta">
-        {{ now | date: "%H:%M" }}<br/>
+        Updated {% if updated_at %}{{ updated_at }}{% else %}{{ now | date: "%H:%M" }}{% endif %}<br/>
         <span style="opacity:0.6">refreshes 5m</span>
       </div>
     </div>
-    <div style="display: grid; grid-template-columns: 1.05fr 1fr; flex: 1; min-height: 0;">
-      <div style="padding: 12px 18px;">
+    <div style="display: grid; grid-template-columns: 1.05fr 1fr; flex: 1; min-height: 0; overflow: hidden;">
+      <div style="padding: 12px 18px; min-height: 0; overflow: hidden;">
         {%- assign trains = IDX_0.Trains -%}
         {%- assign first_train = trains | first -%}
         {%- assign east = trains | where: "Group", "1" -%}
@@ -117,7 +119,7 @@
               <div style="background: var(--bg-shade); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 3px 8px; font-family: var(--mono); font-size: 10px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; margin-top: 6px;">
                 ▸ {{ dir_label }}
               </div>
-              {%- for t in rows limit: 4 -%}
+              {%- for t in rows limit: 3 -%}
                 <div style="display: grid; grid-template-columns: 34px 40px 1fr 50px; gap: 6px; padding: 5px 8px; border-bottom: 1px solid var(--rule-soft); font-family: var(--mono); font-size: 15px; font-weight: 700; align-items: center; line-height: 1;">
                   <span style="background: var(--ink); color: var(--bg); text-align: center; padding: 3px 0; font-size: 11px; font-weight: 900; letter-spacing: 0.06em; border-radius: 2px;">{{ t.Line }}</span>
                   <span style="text-align: center; font-weight: 800;">{{ t.Car | default: "-" }}</span>
@@ -132,7 +134,7 @@
         {%- endif -%}
       </div>
 
-      <div style="padding: 12px 18px; border-left: 2px solid var(--ink);">
+      <div style="padding: 12px 18px; border-left: 2px solid var(--ink); min-height: 0; overflow: hidden;">
         <div style="display: flex; align-items: baseline; gap: 8px; border-bottom: 3px solid var(--ink); padding-bottom: 4px; margin-bottom: 6px;">
   <span style="background: var(--ink); color: var(--bg); font-weight: 900; font-size: 11px; padding: 3px 7px; letter-spacing: 0.1em; border-radius: 2px;">FFX</span>
   <span style="font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;">Connector — nearby stops</span>
@@ -161,7 +163,7 @@
       <div style="font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: var(--bg-shade); padding: 3px 8px; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink);">
         ▸ {{ sn }}
       </div>
-      {%- for p in rows limit: 4 -%}
+      {%- for p in rows limit: 3 -%}
         <div style="display: grid; grid-template-columns: 44px 1fr 50px; gap: 8px; padding: 5px 8px; border-bottom: 1px solid var(--rule-soft); align-items: center; font-family: var(--mono); font-size: 13px; font-weight: 700; line-height: 1;">
           <span style="background: var(--ink); color: var(--bg); text-align: center; padding: 3px 0; font-size: 11px; font-weight: 900; letter-spacing: 0.04em; border-radius: 2px;">{{ p.rt }}</span>
           <span style="text-transform: uppercase; font-size: 12px;">{{ p.des }}</span>
