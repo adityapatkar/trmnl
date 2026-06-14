@@ -1,13 +1,14 @@
 # TRMNL Plugins
 
-Four private plugins for a TRMNL e-ink display (800×480), driving:
+Five private plugins for a TRMNL e-ink display (800×480), driving:
 
 | plugin | what it shows | refresh |
 |--------|----------------|---------|
-| [`plugins/transit`](plugins/transit/) | next trains (WMATA) + next buses (Fairfax Connector) + service alerts | 5 min |
+| [`plugins/transit`](plugins/transit/) | next trains (WMATA) + next buses (Fairfax Connector) + service alerts + Capital Bikeshare | 5 min |
 | [`plugins/man-utd-fixture`](plugins/man-utd-fixture/) | Man Utd next fixture; auto-switches to a live score view during matches | 5 min |
 | [`plugins/ucl-table`](plugins/ucl-table/) | UCL league-phase table → knockout bracket | 60 min |
 | [`plugins/epl-table`](plugins/epl-table/) | Premier League table | 60 min |
+| [`plugins/world-cup`](plugins/world-cup/) | 2026 FIFA World Cup — 12 group tables → knockout bracket | 60 min |
 
 Pure private plugins — no backend, no proxy. Each polls APIs directly and shapes data in Liquid. A local Node.js test harness renders templates against captured fixtures so you can iterate without paste-and-refresh cycles in the TRMNL admin.
 
