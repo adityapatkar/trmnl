@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
 import { renderTemplate } from '../../tools/render-lib.mjs';
 
 async function loadFixture(name) {
@@ -13,10 +14,19 @@ async function loadTemplate() {
   return readFile(new URL('./markup.liquid', import.meta.url), 'utf8');
 }
 
+// Apply the same transform that runs in TRMNL's Sandbox Runtime, so the markup
+// tests see the ET-formatted kick-off strings and countdown the device sees.
+const transformSrc = await readFile(new URL('./transform.js', import.meta.url), 'utf8');
+const transformCtx = vm.createContext({ Intl, Date, Math, Array, isNaN });
+vm.runInContext(transformSrc, transformCtx);
+const transform = transformCtx.transform;
+
 async function render({ next = 'next-fixture', live = 'live-empty', form, now } = {}) {
+  const out = transform({ IDX_0: await loadFixture(next), IDX_1: await loadFixture(live) });
+  const { IDX_0, IDX_1, ...extras } = out;
   return renderTemplate(await loadTemplate(), {
-    formFields: { ...(await loadForm()), ...form },
-    idxResponses: [await loadFixture(next), await loadFixture(live)],
+    formFields: { ...(await loadForm()), ...extras, ...form },
+    idxResponses: [IDX_0, IDX_1],
     now,
   });
 }
@@ -112,4 +122,38 @@ test('live view shows stoppage time as "45+2" format when injuryTime > 0', async
   await writeFile(new URL('./samples/live-stoppage.json', import.meta.url), JSON.stringify(live));
   const html = await render({ live: 'live-stoppage' });
   assert.match(html, /45\+2/);
+});
+
+test('kick-off is rendered in US Eastern time, never raw UTC', async () => {
+  const html = await render();
+  // Sample kicks off 2026-08-15T14:00:00Z → 10:00 AM EDT.
+  assert.match(html, /10:00 AM EDT/);
+  assert.doesNotMatch(html, /14:00/);
+});
+
+test('countdown never renders the Unix epoch (the `now`-is-undefined bug)', async () => {
+  const html = await render();
+  const days = [...html.matchAll(/>\s*(\d+)d\b/g)].map(m => Number(m[1]));
+  for (const d of days) assert.ok(d < 400, `implausible countdown: ${d}d`);
+});
+
+test('transform formats a winter fixture as EST and a summer one as EDT', () => {
+  const winter = transform({ IDX_0: { matches: [{ utcDate: '2027-01-15T15:00:00Z' }] }, IDX_1: { matches: [] } });
+  const summer = transform({ IDX_0: { matches: [{ utcDate: '2027-08-15T14:00:00Z' }] }, IDX_1: { matches: [] } });
+  assert.match(winter.next_kickoff_et, /10:00 AM EST/);
+  assert.match(summer.next_kickoff_et, /10:00 AM EDT/);
+});
+
+test('transform countdown buckets: minutes, hours, days', () => {
+  const at = iso => transform({ IDX_0: { matches: [{ utcDate: iso }] }, IDX_1: { matches: [] } }).next_countdown;
+  const plus = mins => new Date(Date.now() + mins * 60000).toISOString();
+  assert.match(at(plus(48)), /^4[5-9]m$/);
+  assert.match(at(plus(372)), /^6h 1[12]m$/);
+  assert.match(at(plus(60 * 76)), /^3d [34]h$/);
+  assert.equal(at(plus(-10)), 'Kicking off');
+});
+
+test('live view shows kick-off time in Eastern time', async () => {
+  const html = await render({ live: 'live-match' });
+  assert.match(html, /\d{1,2}:\d{2} [AP]M E[SD]T/);
 });

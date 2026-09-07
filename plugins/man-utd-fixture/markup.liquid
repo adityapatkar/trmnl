@@ -83,7 +83,7 @@
     <div class="foot-strip">
       <div class="cell"><div class="lbl">Half-time</div><div class="val">{% if live.score.halfTime.home != nil %}{{ live.score.halfTime.home }} – {{ live.score.halfTime.away }}{% else %}—{% endif %}</div></div>
       <div class="cell"><div class="lbl">Venue</div><div class="val">{{ venue }}</div></div>
-      <div class="cell"><div class="lbl">Kicked off</div><div class="val">{{ live.utcDate | date: "%H:%M" }}</div></div>
+      <div class="cell"><div class="lbl">Kicked off</div><div class="val">{% if live_kickoff_time_et %}{{ live_kickoff_time_et }}{% else %}{{ live.utcDate | date: "%H:%M" }} UTC{% endif %}</div></div>
     </div>
   </div>
 {%- elsif IDX_0.matches and IDX_0.matches.size > 0 -%}
@@ -111,7 +111,7 @@
       </div>
       <div class="vs-stack">
         <div class="vs-big">VS</div>
-        <div class="vs-date">{{ m.utcDate | date: "%a %d %b · %H:%M" }}</div>
+        <div class="vs-date">{% if next_kickoff_et %}{{ next_kickoff_et }}{% else %}{{ m.utcDate | date: "%a %d %b · %H:%M" }} UTC{% endif %}</div>
       </div>
       <div class="team">
         <img class="crest-img" alt="{{ m.awayTeam.shortName }}" src="{{ m.awayTeam.crest }}"/>
@@ -119,18 +119,15 @@
         <div class="tla">{{ m.awayTeam.tla }}</div>
       </div>
     </div>
-    {%- assign utc_secs = m.utcDate | date: "%s" -%}
-    {%- assign now_secs = now | date: "%s" -%}
-    {%- assign secs = utc_secs | minus: now_secs -%}
-    {%- assign hrs = secs | divided_by: 3600 -%}
-    {%- if hrs < 0 -%}{%- assign hrs = 0 -%}{%- endif -%}
+    {%- comment -%}
+      Countdown and Eastern-time kick-off both come from transform.js. TRMNL's
+      Liquid has no `now` variable (a `now | date: "%s"` here rendered the whole
+      Unix epoch as a ~20,600-day countdown) and its `date` filter can't shift
+      time zones, so both are computed in the transform against America/New_York.
+    {%- endcomment -%}
     <div class="foot-strip">
-      <div class="cell"><div class="lbl">Kicks off in</div><div class="val big">
-        {%- if hrs >= 24 -%}{{ hrs | divided_by: 24 }}d {{ hrs | modulo: 24 }}h
-        {%- else -%}{{ hrs }}h
-        {%- endif -%}
-      </div></div>
-      <div class="cell"><div class="lbl">Local time</div><div class="val">{{ m.utcDate | date: "%H:%M" }}</div></div>
+      <div class="cell"><div class="lbl">Kicks off in</div><div class="val big">{% if next_countdown %}{{ next_countdown }}{% else %}—{% endif %}</div></div>
+      <div class="cell"><div class="lbl">Kick-off (ET)</div><div class="val">{% if next_kickoff_time_et %}{{ next_kickoff_time_et }}{% else %}{{ m.utcDate | date: "%H:%M" }} UTC{% endif %}</div></div>
       <div class="cell"><div class="lbl">Venue</div><div class="val">{{ venue }}</div></div>
     </div>
   </div>
