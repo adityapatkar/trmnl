@@ -22,3 +22,7 @@ plugins/*/plugin-export.json
 # Local preview files
 plugins/*/preview.html
 plugins/*/preview-*.html
+
+# Personal course data: the repo ships a synthetic fixture and an example
+# semester config. Real feeds and real schedules stay local.
+plugins/*/local/

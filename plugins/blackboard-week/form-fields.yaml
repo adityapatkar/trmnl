@@ -1,0 +1,12 @@
+# TRMNL admin form-builder definition for the Blackboard week plugin.
+# Paste this YAML into the plugin's "Form Fields" section in TRMNL admin
+# (or import it visually at https://usetrmnl.github.io/trmnl-form-builder/).
+#
+# `form-fields.json` (sibling file) is for the local Node.js test harness only.
+
+- keyname: blackboard_ics_url
+  field_type: password
+  name: Blackboard calendar share link
+  description: In Blackboard, open <b>Calendar</b>, then the menu beside <b>Calendar Settings</b>, then <b>Share Calendar</b>. The link ends in <code>/learn.ics</code>.
+  help_text: Treat this like a password — the link is a bearer token, so anyone holding it can read the calendar. Blackboard offers no way to see who has used it.
+  placeholder: https://blackboard.gwu.edu/webapps/calendar/calendarFeed/YOUR_TOKEN/learn.ics
