@@ -76,3 +76,14 @@ test('shows a stage status marker (FT / L1 / LIVE / SCHED) for each tie', async 
   const html = await render({ knockout: 'knockout-matches' });
   assert.match(html, /\b(FT|L1|LIVE|SCHED)\b/);
 });
+
+test('explains a pre-season 404 instead of rendering an empty table', async () => {
+  // football-data.org 404s /standings for a season with no matches played, which
+  // is every pre-season. The knockout feed still answers 200 with an empty array,
+  // so the token is demonstrably fine and the auth placeholder would be a lie.
+  // This used to fall through to the table branch and render <tbody></tbody>.
+  const html = await render({ standings: 'standings-404-preseason', knockout: 'knockout-matches-empty' });
+  assert.match(html, /hasn't kicked off/i);
+  assert.doesNotMatch(html, /Check your football-data\.org API key/i);
+  assert.doesNotMatch(html, /<tbody>\s*<\/tbody>/);
+});

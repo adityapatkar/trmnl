@@ -45,6 +45,17 @@ function transform(input) {
         })
     : [];
 
+  // "Updated at" timestamp in US Eastern Time, with EST/EDT auto-detected by
+  // Intl.DateTimeFormat so DST transitions are handled without any custom
+  // offset math. Example outputs: "11:47 PM EDT", "8:03 AM EST".
+  const updated_at = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+  }).format(new Date());
+
   return {
     IDX_0: input.IDX_0,
     IDX_1: input.IDX_1,
@@ -55,5 +66,6 @@ function transform(input) {
       ttl: input.IDX_4 ? input.IDX_4.ttl : null,
       data: { stations: filtered },
     },
+    updated_at,
   };
 }

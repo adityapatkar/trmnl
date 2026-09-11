@@ -1,0 +1,153 @@
+<style>
+{% include_raw "plugins/_shared/styles.css" %}
+.wc-logo { width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--ink); color: var(--bg); border-radius: 50%; font-family: var(--sans); font-weight: 900; font-size: 13px; letter-spacing: 0.04em; }
+
+/* Group-stage view: 4 columns × 3 rows of group cards */
+.group-grid { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); gap: 6px 8px; padding: 6px 14px 6px; min-height: 0; overflow: hidden; }
+.group-card { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.group-head {
+  font-family: var(--mono); font-size: 9.5px; font-weight: 800; letter-spacing: 0.18em;
+  text-transform: uppercase; background: var(--ink); color: var(--bg);
+  padding: 2px 5px;
+}
+table.gtable { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; line-height: 1; }
+table.gtable td { padding: 2px 4px; border-bottom: 1px solid var(--rule-soft); white-space: nowrap; }
+table.gtable td.pos { width: 12px; text-align: center; color: var(--ink-soft); font-size: 9px; }
+table.gtable td.tla { font-weight: 800; font-family: var(--sans); font-size: 11px; letter-spacing: 0.04em; }
+table.gtable td.gd { text-align: right; font-size: 10px; color: var(--ink-soft); width: 28px; }
+table.gtable td.pts { text-align: right; font-weight: 900; width: 18px; }
+table.gtable tr.row-inv td { background: var(--ink); color: var(--bg); font-weight: 900; }
+table.gtable tr.row-inv td.gd, table.gtable tr.row-inv td.pos { color: var(--bg); opacity: 0.85; }
+table.gtable tr.qual td.pos::before { content: '▸'; color: var(--ink); }
+
+/* Knockout view */
+.bracket-grid { flex: 1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 8px 14px; min-height: 0; overflow: hidden; }
+.bracket-col { display: flex; flex-direction: column; gap: 4px; min-height: 0; overflow: hidden; }
+.bracket-col h4 { margin: 0 0 2px; font-size: 9px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; padding-bottom: 2px; border-bottom: 1px solid var(--ink); }
+.tie { font-family: var(--mono); font-size: 10px; padding: 3px 4px; border: 1px solid var(--rule); display: grid; grid-template-columns: 1fr 26px; gap: 3px; align-items: center; line-height: 1.15; }
+.tie .matchup { font-weight: 700; }
+.tie .stat { text-align: right; font-size: 8px; font-weight: 800; letter-spacing: 0.08em; color: var(--ink-soft); }
+.tie.highlight { background: var(--ink); color: var(--bg); }
+.tie.highlight .stat { color: var(--bg); opacity: 0.85; }
+</style>
+
+{%- comment -%}
+  Mode detection — same pattern as UCL plugin:
+    knockout matches exist → bracket view
+    otherwise → 12-group table grid
+{%- endcomment -%}
+{%- assign std = IDX_0.standings | default: standings -%}
+{%- assign ssn = IDX_0.season | default: season -%}
+{%- assign err_msg = IDX_0.message | default: message -%}
+
+{%- comment -%}
+  Date-based mode detection: switch to bracket view on the day the first
+  knockout match kicks off. football-data.org pre-populates the 16 R16
+  matches with their utcDate set well in advance, so we use the earliest
+  knockout utcDate as the cutoff. ISO strings sort lexicographically so a
+  string compare is correct without any epoch conversion.
+  (Teams being populated isn't sufficient — the API can fill TLAs early as
+  group standings settle, before knockout play actually begins.)
+{%- endcomment -%}
+{%- assign knockout_active = false -%}
+{%- if IDX_1.matches and IDX_1.matches.size > 0 -%}
+  {%- assign now_iso = now | date: "%Y-%m-%dT%H:%M:%SZ" -%}
+  {%- assign earliest_iso = "9999" -%}
+  {%- for m in IDX_1.matches -%}
+    {%- if m.utcDate != nil and m.utcDate < earliest_iso -%}
+      {%- assign earliest_iso = m.utcDate -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if now_iso >= earliest_iso -%}
+    {%- assign knockout_active = true -%}
+  {%- endif -%}
+{%- endif -%}
+
+{%- if std == nil -%}
+  <div class="screen"><div class="placeholder setup">
+    Couldn't load World Cup data. Check your football-data.org API key.
+    {% if err_msg %}<br/><br/><small>{{ err_msg }}</small>{% endif %}
+  </div></div>
+{%- elsif knockout_active -%}
+  {%- assign all_matches = IDX_1.matches -%}
+  {%- assign stages = "LAST_16,QUARTER_FINALS,SEMI_FINALS,THIRD_PLACE,FINAL" | split: "," -%}
+  {%- assign stage_labels = "Round of 16,Quarter-Finals,Semi-Finals,3rd Place,Final" | split: "," -%}
+
+  <div class="screen">
+    <div class="title-bar">
+      <div class="wc-logo" aria-label="FIFA World Cup">WC</div>
+      <div class="t-stack">
+        <span class="t">2026 FIFA World Cup</span>
+        <span class="t-sub">Knockout phase</span>
+      </div>
+      <div class="meta">Updated {% if updated_at %}{{ updated_at }}{% else %}{{ now | date: "%H:%M" }}{% endif %}<br/><span style="opacity:0.6">refreshes 60m</span></div>
+    </div>
+    <div class="bracket-grid">
+      {%- for idx in (0..4) -%}
+        {%- assign st = stages[idx] -%}
+        {%- assign label = stage_labels[idx] -%}
+        {%- assign stage_matches = all_matches | where: "stage", st -%}
+        <div class="bracket-col">
+          <h4>{{ label }}</h4>
+          {%- for m in stage_matches -%}
+            {%- assign home_score = m.score.fullTime.home -%}
+            {%- assign away_score = m.score.fullTime.away -%}
+            {%- assign played = false -%}
+            {%- if home_score != nil and away_score != nil -%}{%- assign played = true -%}{%- endif -%}
+            {%- assign live = false -%}
+            {%- if m.status == "IN_PLAY" or m.status == "PAUSED" -%}{%- assign live = true -%}{%- endif -%}
+            {%- assign stat = "TBD" -%}
+            {%- if live -%}{%- assign stat = "LIVE" -%}
+            {%- elsif played and m.status == "FINISHED" -%}{%- assign stat = "FT" -%}
+            {%- elsif m.status == "SCHEDULED" or m.status == "TIMED" -%}{%- assign stat = m.utcDate | date: "%-m/%-d" -%}{%- endif -%}
+            {%- assign is_highlight = false -%}
+            {%- if m.homeTeam.id == highlight_team_id or m.awayTeam.id == highlight_team_id -%}{%- assign is_highlight = true -%}{%- endif -%}
+            <div class="tie{% if is_highlight %} highlight{% endif %}">
+              <span class="matchup">
+                {{ m.homeTeam.tla | default: "TBD" }}
+                {%- if played %} {{ home_score }}–{{ away_score }} {% else %} vs {% endif -%}
+                {{ m.awayTeam.tla | default: "TBD" }}
+              </span>
+              <span class="stat">{{ stat }}</span>
+            </div>
+          {%- endfor -%}
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+{%- else -%}
+  {%- comment -%}Group-stage view: 12 group cards in a 4×3 grid.{%- endcomment -%}
+  <div class="screen">
+    <div class="title-bar">
+      <div class="wc-logo" aria-label="FIFA World Cup">WC</div>
+      <div class="t-stack">
+        <span class="t">2026 FIFA World Cup</span>
+        <span class="t-sub">{{ ssn.startDate | date: "%-d %b" }} – {{ ssn.endDate | date: "%-d %b %Y" }} · Group stage</span>
+      </div>
+      <div class="meta">Updated {% if updated_at %}{{ updated_at }}{% else %}{{ now | date: "%H:%M" }}{% endif %}<br/><span style="opacity:0.6">refreshes 60m</span></div>
+    </div>
+    <div class="group-grid">
+      {%- for grp in std -%}
+        {%- assign group_label = grp.group | default: "?" | replace: "Group ", "" -%}
+        <div class="group-card">
+          <div class="group-head">Group {{ group_label }}</div>
+          <table class="gtable">
+            <tbody>
+              {%- for r in grp.table limit: 4 -%}
+                {%- assign row_class = "" -%}
+                {%- if r.team.id == highlight_team_id -%}{%- assign row_class = "row-inv" -%}
+                {%- elsif r.position <= 2 -%}{%- assign row_class = "qual" -%}{%- endif -%}
+                <tr class="{{ row_class }}">
+                  <td class="pos">{{ r.position }}</td>
+                  <td class="tla">{{ r.team.tla | default: r.team.shortName }}</td>
+                  <td class="gd">{% if r.goalDifference >= 0 %}+{% endif %}{{ r.goalDifference }}</td>
+                  <td class="pts">{{ r.points }}</td>
+                </tr>
+              {%- endfor -%}
+            </tbody>
+          </table>
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+{%- endif -%}

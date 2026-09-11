@@ -125,6 +125,19 @@ table.standings tbody tr.cut-line td { border-bottom: 1.5px dashed #888; }
       {%- endfor -%}
     </div>
   </div>
+{%- elsif IDX_0.standings == nil -%}
+  {%- comment -%}
+    The knockout feed answered (so the token works) but standings did not.
+    football-data.org returns 404 for /standings on a season with no matches
+    played, which is every pre-season. Previously this fell through to the table
+    branch and rendered <tbody></tbody> — headers, no teams, no explanation.
+  {%- endcomment -%}
+  <div class="screen"><div class="placeholder setup">
+    <div>
+      No Champions League standings yet — the league phase hasn't kicked off.
+      {% if IDX_0.message %}<br/><br/><small>{{ IDX_0.message }}</small>{% endif %}
+    </div>
+  </div></div>
 {%- else -%}
   {%- assign rows = IDX_0.standings[0].table | default: empty -%}
   {%- if rows == empty -%}

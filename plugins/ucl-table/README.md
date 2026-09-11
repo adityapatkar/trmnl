@@ -7,7 +7,7 @@ Auto-switches between league-phase standings (36 teams in two columns) and the k
 1. **Plugins → New private plugin → Polling strategy.**
 2. **Polling URLs** (paste, line-separated):
    ```
-   https://api.football-data.org/v4/competitions/CL/standings
+   https://api.football-data.org/v4/competitions/CL/standings?season=2026
    https://api.football-data.org/v4/competitions/CL/matches?stage=LAST_16,QUARTER_FINALS,SEMI_FINALS,FINAL
    ```
 3. **Headers**:
@@ -36,7 +36,8 @@ Mode is auto-detected: if the knockout-matches URL returns at least one match, t
 
 ## Field-shape notes (verified against live API)
 
-- `standings[0].stage` is `"GROUP_STAGE"` for the new 36-team league phase (not `"LEAGUE_STAGE"`).
+- `standings[0].stage` is `"LEAGUE_STAGE"` for the 36-team league phase. It was `"GROUP_STAGE"` when this plugin was written and the API has since changed it back; the markup does not branch on it, so the rename was harmless. Don't start depending on it.
+- **`?season=` is required on the standings URL.** Without it the endpoint resolves to the current season, and football-data.org returns **404** for a season that hasn't kicked off — every pre-season. Verified 2026-09-06: bare `/CL/standings` gave 404 while `?season=2026` gave the full 36-team table with all-zero rows. **Bump the year each August.**
 - Knockout stage strings observed: `LAST_16`, `QUARTER_FINALS`, `SEMI_FINALS`, `FINAL`. No `PLAY_OFFS` stage appears in the v4 API for the 24-team R32 playoff round.
 - The FINAL is a single leg (status often `TIMED` until kickoff, then `IN_PLAY` / `FINISHED`).
 - If `highlight_team_id` is set to a team not in this year's UCL (e.g., Man Utd didn't qualify in 2025-26), no row is highlighted in the table view and no tie is highlighted in the bracket. Graceful no-op.

@@ -1,0 +1,20 @@
+# TRMNL admin form-builder definition for the 2026 FIFA World Cup plugin.
+# Paste this YAML into the plugin's "Form Fields" section in TRMNL admin.
+#
+# `form-fields.json` (sibling file) is for the local Node.js test harness only.
+
+- keyname: football_data_api_key
+  field_type: password
+  name: football-data.org API key
+  description: Free token from <a href="https://www.football-data.org/client/register">football-data.org/client/register</a> — same key as the EPL / UCL plugins.
+
+- keyname: highlight_team_id
+  field_type: number
+  name: Highlight team ID
+  description: Row (in the group table) or tie (in the knockout bracket) to highlight.
+  help_text: <code>771</code> = United States (default, since they're a host).
+    Other common picks — <code>770</code> England, <code>762</code> Argentina, <code>764</code> Brazil,
+    <code>765</code> Portugal, <code>773</code> France, <code>760</code> Spain, <code>759</code> Germany.
+    Browse all teams at <a href="https://api.football-data.org/v4/competitions/WC/standings">api.football-data.org/v4/competitions/WC/standings</a>.
+  default: 771
+  placeholder: 771

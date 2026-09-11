@@ -40,9 +40,14 @@ async function renderAll({ predictions = 'wmata-predictions', buses = 'fairfax-p
     trmnl: { plugin_settings: { custom_fields_values: formFields } },
   };
   const transformed = transform(transformInput);
+  // The transform also returns top-level merge variables (e.g., updated_at)
+  // alongside the IDX_n entries. In TRMNL these become available to the markup
+  // directly. Emulate that by spreading them into formFields (which is how
+  // render-lib exposes top-level merge vars to the template).
+  const { IDX_0, IDX_1, IDX_2, IDX_3, IDX_4, ...topLevelMergeVars } = transformed;
   return renderTemplate(await loadTemplate(), {
-    formFields,
-    idxResponses: [transformed.IDX_0, transformed.IDX_1, transformed.IDX_2, transformed.IDX_3, transformed.IDX_4],
+    formFields: { ...formFields, ...topLevelMergeVars },
+    idxResponses: [IDX_0, IDX_1, IDX_2, IDX_3, IDX_4],
     now,
   });
 }
@@ -52,6 +57,31 @@ test('renders the title bar with station name and refresh interval', async () =>
   assert.match(html, /TYSONS/i);
   assert.match(html, /METRO/i);
   assert.match(html, /refreshes/i);
+});
+
+test('shows "Updated" timestamp in Eastern Time (EDT/EST) in the title bar', async () => {
+  const html = await renderAll();
+  assert.match(html, /Updated\s+\d{1,2}:\d{2}\s+(?:AM|PM)\s+E[SD]T/);
+});
+
+test('caps train rows at 3 per direction (no overflow if API returns many)', async () => {
+  // Build a synthetic IDX_0 with 10 trains in Group=1
+  const fakeTrains = Array.from({ length: 10 }, (_, i) => ({
+    Car: '8', Destination: 'Ashburn', DestinationCode: 'N12',
+    DestinationName: 'Ashburn', Group: '1', Line: 'SV',
+    LocationCode: 'N08', LocationName: 'Herndon', Min: String(i + 1),
+  }));
+  const { writeFile } = await import('node:fs/promises');
+  await writeFile(
+    new URL('./samples/wmata-predictions-many.json', import.meta.url),
+    JSON.stringify({ Trains: fakeTrains }),
+  );
+  const html = await renderAll({ predictions: 'wmata-predictions-many' });
+  // Count rendered train rows: each one contains a "lncode"-like SV span
+  // wrapped with PIDS row styling — easiest signal is the line code badge.
+  // The fixture has 10 trains; the markup should render at most 3.
+  const pidsRows = (html.match(/SV<\/span>/g) || []).length;
+  assert.ok(pidsRows <= 3, `expected at most 3 train rows, got ${pidsRows}`);
 });
 
 test('shows a setup placeholder when WMATA + Fairfax responses are both auth errors', async () => {
@@ -71,7 +101,7 @@ test('shows inline metro error + working bus column when WMATA only is auth-brok
   // Bus column still has its FFX header and at least one route number
   assert.match(html, /Connector/i);
   const buses = await loadFixture('fairfax-predictions');
-  assert.match(html, new RegExp(`\\b${buses['bustime-response'].prd[0].rt}\\b`));
+  assert.match(html, new RegExp(String.raw`\b${buses['bustime-response'].prd[0].rt}\b`));
 });
 
 test('shows inline bus error + working metro column when Fairfax only is auth-broken', async () => {
@@ -120,7 +150,7 @@ test('renders bus predictions grouped by stop name', async () => {
   // Each route renders the route number in a badge
   const fixture = await loadFixture('fairfax-predictions');
   const firstRoute = fixture['bustime-response'].prd[0].rt;
-  assert.match(html, new RegExp(`\\b${firstRoute}\\b`));
+  assert.match(html, new RegExp(String.raw`\b${firstRoute}\b`));
 });
 
 test('renders DUE for buses with prdctdn=DUE', async () => {
