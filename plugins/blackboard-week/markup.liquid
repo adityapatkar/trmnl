@@ -142,7 +142,7 @@
           {%- if row.kind == "more" -%}
             <div class="drow more">
               <div class="dlabel">{{ row.label }}</div>
-              <div class="item"><span class="mark-spacer"></span><span class="clear">{{ row.text }}</span></div>
+              <div class="item"><span class="mark-spacer"></span><span class="clear">{{ row.text | replace: " - see", " &mdash; see" }}</span></div>
             </div>
           {%- else -%}
             <div class="drow{% if row.is_today %} today{% endif %}">
@@ -159,8 +159,14 @@
                   <div class="item {{ it.kind }}{% if it.past %} past{% endif %}">
                     <span class="mark"></span>
                     <span class="item-body">
-                      <span class="itime">{{ it.time_label }}</span>
-                      <span class="ititle">{{ it.title }}{% if it.course != blank %}<span class="chip">{{ it.course }}</span>{% endif %}</span>
+                      {%- comment -%}
+                        The serverless payload is ASCII-only — TRMNL's runtime
+                        mangles multi-byte UTF-8 and the corrupted bytes break
+                        its JSON. Entities are ASCII in the source, so the nice
+                        punctuation is assembled here instead.
+                      {%- endcomment -%}
+                      <span class="itime">{{ it.time_from }}{% if it.time_to != blank %} &ndash; {{ it.time_to }}{% endif %}{% if it.detail != blank %} &nbsp;&middot;&nbsp; {{ it.detail }}{% endif %}</span>
+                      <span class="ititle">{{ it.title | replace: "...", "&hellip;" }}{% if it.course != blank %}<span class="chip">{{ it.course }}</span>{% endif %}</span>
                     </span>
                   </div>
                 {%- endfor -%}
@@ -174,8 +180,8 @@
         <div class="col-h">Due next</div>
         {%- for q in queue -%}
           <div class="q{% if q.is_today %} is-today{% endif %}">
-            <div class="q-when">{{ q.when_label }}</div>
-            <div class="q-title">{{ q.title }}</div>
+            <div class="q-when">{{ q.day_label }} &middot; {{ q.time_label }}</div>
+            <div class="q-title">{{ q.title | replace: "...", "&hellip;" }}</div>
             <div class="q-course">{{ q.course }}</div>
           </div>
         {%- else -%}

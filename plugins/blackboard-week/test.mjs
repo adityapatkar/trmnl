@@ -150,8 +150,8 @@ test('attributes by UID block, cross-checked against the syllabus', () => {
 test('truncated titles break at a word, not mid-word', () => {
   const out = at(SUN_SEP_6);
   for (const q of out.queue) {
-    if (!q.title.endsWith('…')) continue;
-    const lastWord = q.title.slice(0, -1).trim().split(' ').pop();
+    if (!q.title.endsWith('...')) continue;
+    const lastWord = q.title.slice(0, -3).trim().split(' ').pop();
     assert.ok(lastWord.length > 2, `truncated mid-word: ${q.title}`);
   }
 });
@@ -178,9 +178,13 @@ test('places the two weekly classes on Wednesday and Thursday', () => {
   const wedClass = wed.items.find((i) => i.kind === 'class');
   const thuClass = thu.items.find((i) => i.kind === 'class');
   assert.equal(wedClass.title, 'Team Dynamics');
-  assert.match(wedClass.time_label, /4:30 PM – 7:00 PM.*Hall 652/);
+  assert.equal(wedClass.time_from, '4:30 PM');
+  assert.equal(wedClass.time_to, '7:00 PM');
+  assert.equal(wedClass.detail, 'Hall 652');
   assert.equal(thuClass.title, 'Analytics');
-  assert.match(thuClass.time_label, /7:00 PM – 8:00 PM.*Online/);
+  assert.equal(thuClass.time_from, '7:00 PM');
+  assert.equal(thuClass.time_to, '8:00 PM');
+  assert.equal(thuClass.detail, 'Online');
 });
 
 test('the async course appears only on its five live-session dates', () => {
@@ -188,7 +192,8 @@ test('the async course appears only on its five live-session dates', () => {
   const withSession = at('2026-11-09T13:00:00Z');
   const sessions = withSession.day_rows.flatMap((r) => r.items).filter((i) => i.kind === 'class' && i.title === 'MGT 0000');
   assert.equal(sessions.length, 1);
-  assert.match(sessions[0].time_label, /7:00 PM – 9:00 PM/);
+  assert.equal(sessions[0].time_from, '7:00 PM');
+  assert.equal(sessions[0].time_to, '9:00 PM');
 
   // A week with no live session has none.
   const without = at('2026-10-19T12:00:00Z');
@@ -218,7 +223,7 @@ test('surfaces the capstone, which Blackboard never publishes', () => {
   const capstone = out.queue.find((q) => /Capstone/.test(q.title));
   assert.ok(capstone, 'capstone missing from the queue');
   assert.equal(capstone.course, 'MGT 0000');
-  assert.match(capstone.when_label, /6:00 PM/);
+  assert.equal(capstone.time_label, '6:00 PM');
 });
 
 // ── Window and ordering ──────────────────────────────────────────────────────
@@ -270,7 +275,7 @@ test('the queue deliberately runs past the 7-day window', () => {
 test('renders Eastern time, never a bare 24-hour clock', () => {
   const out = at(MON_SEP_7);
   assert.match(out.updated_at, /^\d{1,2}:\d{2} [AP]M ET$/);
-  for (const q of out.queue) assert.match(q.when_label, /\d{1,2}:\d{2} [AP]M$/);
+  for (const q of out.queue) assert.match(q.time_label, /^\d{1,2}:\d{2} [AP]M$/);
 });
 
 test('countdown is coarse, matching the hourly poll', () => {
@@ -439,4 +444,36 @@ test('run() survives a thrown fetch', async () => {
   const out = await ctx.run({ blackboard_ics_url: 'https://bb.example/learn.ics' });
   assert.equal(out.ok, false);
   assert.match(out.debug_shape, /fetch failed: getaddrinfo ENOTFOUND/);
+});
+
+// ── Output encoding ──────────────────────────────────────────────────────────
+
+test('the payload is pure ASCII', () => {
+  // TRMNL's Serverless runtime corrupts multi-byte UTF-8 when it serialises the
+  // return value — a middot came back as two replacement characters in a plugin
+  // log — and enough of them produced "malformed json, plugin in a degraded
+  // state". Typography belongs in the markup as HTML entities, not in here.
+  for (const iso of [SUN_SEP_6, MON_SEP_7, '2026-11-09T13:00:00Z', '2026-12-09T13:00:00Z']) {
+    const json = JSON.stringify(at(iso));
+    const offenders = [...new Set([...json].filter((ch) => ch.codePointAt(0) > 127))];
+    assert.deepEqual(offenders.join(''), '', `non-ASCII at ${iso}: ${offenders.join('')}`);
+  }
+});
+
+test('the ASCII fold survives an accented semester config', () => {
+  // The real config has a room named "Duquès 652". It must degrade to "Duques",
+  // not lose the character or leak a multi-byte sequence into the payload.
+  const accented = transformSrc.replace("location: 'Hall 652'", "location: 'Duqu\u00e8s 652'");
+  const ctx = vm.createContext({ Intl, Date, Math, Array, Object, Number, String, JSON, isNaN, console });
+  vm.runInContext(accented, ctx);
+  const out = ctx.transform({ IDX_0: ICS });
+  const json = JSON.stringify(out);
+  assert.ok(![...json].some((ch) => ch.codePointAt(0) > 127), 'accent leaked into the payload');
+  assert.match(json, /Duques 652/);
+});
+
+test('failure messages are ASCII too', () => {
+  const out = runTransform({ IDX_0: 'a \u2014 b \u00b7 c \u2026' }, MON_SEP_7);
+  assert.equal(out.ok, false);
+  assert.ok(![...JSON.stringify(out)].some((ch) => ch.codePointAt(0) > 127), out.debug_shape);
 });
