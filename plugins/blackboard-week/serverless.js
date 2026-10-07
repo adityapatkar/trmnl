@@ -40,7 +40,7 @@ var SEMESTER = {
   courses: {
     LT: { short: 'Team Dynamics', name: 'Team Dynamics' },
     ETH: { short: 'Analytics', name: 'Applied Analytics' },
-    MGT: { short: 'MGT 0000', name: 'MGT 0000 · Example Async Course' },
+    MGT: { short: 'MGT 0000', name: 'MGT 0000 - Example Async Course' },
   },
 
   // weekday: 0=Sun .. 6=Sat
@@ -52,11 +52,11 @@ var SEMESTER = {
   // The MGT course is asynchronous — no weekly meeting, just five live sessions
   // on scattered dates, which is why oneOffClasses exists at all.
   oneOffClasses: [
-    { course: 'MGT', date: '2026-08-24', start: '19:00', end: '21:00', location: 'Online · live session' },
-    { course: 'MGT', date: '2026-08-30', start: '19:00', end: '21:00', location: 'Online · live session' },
-    { course: 'MGT', date: '2026-10-11', start: '19:00', end: '21:00', location: 'Online · live session' },
-    { course: 'MGT', date: '2026-11-15', start: '19:00', end: '21:00', location: 'Online · live session' },
-    { course: 'MGT', date: '2026-11-29', start: '19:00', end: '21:00', location: 'Online · live session' },
+    { course: 'MGT', date: '2026-08-24', start: '19:00', end: '21:00', location: 'Online - live session' },
+    { course: 'MGT', date: '2026-08-30', start: '19:00', end: '21:00', location: 'Online - live session' },
+    { course: 'MGT', date: '2026-10-11', start: '19:00', end: '21:00', location: 'Online - live session' },
+    { course: 'MGT', date: '2026-11-15', start: '19:00', end: '21:00', location: 'Online - live session' },
+    { course: 'MGT', date: '2026-11-29', start: '19:00', end: '21:00', location: 'Online - live session' },
   ],
 
   // Weekly classes only. One-off live sessions are never suppressed — the async
@@ -269,7 +269,7 @@ function truncate(text, max) {
   // Prefer a word boundary, but not one so early it hides most of the title.
   var space = cut.lastIndexOf(' ');
   if (space > max * 0.6) cut = cut.slice(0, space);
-  return cut.replace(/[\s:;,.\-]+$/, '') + '…';
+  return cut.replace(/[\s:;,.\-]+$/, '') + '...';
 }
 
 function uidNumber(uid) {
@@ -323,6 +323,54 @@ function courseInfo(code) {
   return SEMESTER.courses[code] || { short: '—', name: 'Unassigned' };
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ASCII output
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// TRMNL's Serverless runtime corrupts multi-byte UTF-8 when it serialises the
+// returned object. Observed in a plugin log: a middot (U+00B7, bytes C2 B7)
+// came back as two replacement characters while `&` was escaped correctly as
+// \u0026. One such character survived; a screenful of en dashes, middots and
+// ellipses produced "malformed json, plugin in a degraded state".
+//
+// So nothing non-ASCII leaves this function. Typography is the markup's job —
+// it joins the pieces with &middot;, &ndash; and &hellip;, which are plain
+// ASCII in the HTML source and render correctly on the device.
+
+var ASCII_PUNCT = {
+  '\u2010': '-', '\u2011': '-', '\u2012': '-', '\u2013': '-', '\u2014': '-',
+  '\u2212': '-', '\u00b7': '-', '\u2022': '*', '\u2026': '...',
+  '\u2018': "'", '\u2019': "'", '\u201c': '"', '\u201d': '"', '\u00a0': ' ',
+};
+
+// Fold one string to printable ASCII. Diacritics are stripped rather than
+// dropped, so a room like "Duquès 652" degrades to "Duques 652" instead of
+// losing a character — relevant because the real semester config has accents.
+function asciiFold(value) {
+  var t = String(value).replace(/[\u00a0\u00b7\u2010-\u2014\u2018\u2019\u201c\u201d\u2022\u2026\u2212]/g,
+    function (ch) { return ASCII_PUNCT[ch] || ' '; });
+  if (t.normalize) t = t.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return t.replace(/[^\x20-\x7E]/g, '');
+}
+
+// Applied to the whole payload on the way out, so a future config edit can't
+// reintroduce the bug by typing a nice dash into a course name.
+function asciiDeep(value) {
+  if (typeof value === 'string') return asciiFold(value);
+  if (Array.isArray(value)) {
+    var arr = [];
+    for (var i = 0; i < value.length; i++) arr.push(asciiDeep(value[i]));
+    return arr;
+  }
+  if (value && typeof value === 'object') {
+    var obj = {};
+    var keys = Object.keys(value);
+    for (var k = 0; k < keys.length; k++) obj[keys[k]] = asciiDeep(value[keys[k]]);
+    return obj;
+  }
+  return value;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Payload probing
@@ -418,7 +466,7 @@ function buildScreen(raw, debugNote) {
     out.courses.push({ code: codes[c], short: SEMESTER.courses[codes[c]].short, name: SEMESTER.courses[codes[c]].name });
   }
 
-  if (!ok) return out;
+  if (!ok) return asciiDeep(out);
 
   // ── Deadlines: feed + hardcoded, all normalized to one shape ───────────────
   var deadlines = [];
@@ -496,8 +544,11 @@ function buildScreen(raw, debugNote) {
       items.push({
         kind: 'class',
         sort: s.h * 60 + s.mi,
-        time_label: timeLabel(s.h, s.mi) + ' – ' + timeLabel(e.h, e.mi)
-          + (cls[i].location ? '  ·  ' + cls[i].location : ''),
+        // Pieces, not a composed string: the markup joins them with &ndash;
+        // and &middot;, which keeps this payload ASCII.
+        time_from: timeLabel(s.h, s.mi),
+        time_to: timeLabel(e.h, e.mi),
+        detail: cls[i].location || '',
         title: courseInfo(cls[i].course).short,
         course: '',
       });
@@ -510,7 +561,9 @@ function buildScreen(raw, debugNote) {
       items.push({
         kind: 'due',
         sort: d.h * 60 + d.mi,
-        time_label: timeLabel(d.h, d.mi) + (d.source === 'syllabus' ? '  ·  from syllabus' : ''),
+        time_from: timeLabel(d.h, d.mi),
+        time_to: '',
+        detail: d.source === 'syllabus' ? 'from syllabus' : '',
         title: truncate(d.title, AGENDA_TITLE_MAX),
         course: courseInfo(d.course).short,
         past: past,
@@ -569,7 +622,7 @@ function buildScreen(raw, debugNote) {
     out.day_rows.push({
       kind: 'more', is_today: false, items: [],
       label: '+' + hiddenItems + ' more',
-      text: (hiddenItems === 1 ? 'one more deadline' : hiddenItems + ' more deadlines') + ' — see Due next',
+      text: (hiddenItems === 1 ? 'one more deadline' : hiddenItems + ' more deadlines') + ' - see Due next',
     });
   }
 
@@ -583,8 +636,8 @@ function buildScreen(raw, debugNote) {
     if (queuePx + qPx > QUEUE_BUDGET_PX) break;
     queuePx += qPx;
     out.queue.push({
-      when_label: (q.key === todayKey ? 'Today' : titleCase(DOW[weekdayOf(q.key)]) + ' ' + dayNumOf(q.key))
-        + ' · ' + timeLabel(q.h, q.mi),
+      day_label: q.key === todayKey ? 'Today' : titleCase(DOW[weekdayOf(q.key)]) + ' ' + dayNumOf(q.key),
+      time_label: timeLabel(q.h, q.mi),
       title: qTitle,
       course: courseInfo(q.course).short,
       is_today: q.key === todayKey,
@@ -609,7 +662,8 @@ function buildScreen(raw, debugNote) {
     };
   }
 
-  return out;
+  // Last gate before the runtime serialises this. Nothing non-ASCII gets out.
+  return asciiDeep(out);
 }
 
 

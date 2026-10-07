@@ -84,6 +84,20 @@ grep -A4 'BEGIN:VEVENT' plugins/blackboard-week/samples/learn.ics \
 
 Verify a block before trusting it: take one item's title and find it in that course's syllabus. The real Fall 2026 mapping was confirmed that way — one UID's assignment appeared in a syllabus under a specific session — rather than inferred from the numbering alone.
 
+## The payload must be ASCII
+
+TRMNL's Serverless runtime corrupts multi-byte UTF-8 when it serialises the object `run()` returns. A plugin log caught it directly — a middot came back as two replacement characters while `&` was escaped correctly as `\u0026`:
+
+```
+\"name\":\"MGT 6218 \ufffd\ufffd Human Capital \u0026 Talent Acquisition\"
+```
+
+One such character survived. A screenful of them — en dashes in time ranges, middots between time and room, ellipses from truncation — produced **"malformed json, plugin in a degraded state"**.
+
+So `serverless.js` emits ASCII only, and `asciiDeep()` folds the whole payload on every return path as a last gate. It transliterates rather than deletes, so an accented room like `Duquès 652` degrades to `Duques 652` instead of losing a character. A test asserts the payload is ASCII across four dates, including one run with an accented config.
+
+**Typography is the markup's job.** The function emits pieces — `time_from`, `time_to`, `detail`, `day_label` — and `markup.liquid` joins them with `&ndash;`, `&middot;` and `&hellip;`, which are plain ASCII in the HTML source and render properly on the device. If you add a field, emit the parts and compose them in Liquid; don't build a pretty string in JS.
+
 ## Layout notes
 
 The panel is a fixed 800×480 with no scrollbar and no runtime text-fitting, so density is decided in `serverless.js` rather than discovered on the device. `AGENDA_BUDGET_PX` and the constants beside it estimate rendered height; anything that doesn't fit collapses into a `+N more` row instead of being clipped. The estimates are calibrated against the committed previews — if you change type sizes in `markup.liquid`, re-check them.
