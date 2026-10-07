@@ -319,8 +319,12 @@ function classesOn(key) {
   return out.sort(function (a, b) { return a.start < b.start ? -1 : 1; });
 }
 
+// An item whose UID falls outside every configured block and matches no title
+// rule. Blackboard's feed carries no course field, so this is genuinely unknown
+// rather than a bug — it renders as "?" so it reads as a question on the screen
+// instead of a stray dash, and unassigned_count surfaces it to the tests.
 function courseInfo(code) {
-  return SEMESTER.courses[code] || { short: '—', name: 'Unassigned' };
+  return SEMESTER.courses[code] || { short: '?', name: 'Course unknown' };
 }
 
 

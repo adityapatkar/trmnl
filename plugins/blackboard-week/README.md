@@ -15,7 +15,25 @@ This repo is public, so it carries **no real coursework or class schedule**:
 
 The synthetic fixture is generated from the real one with **only `SUMMARY` values replaced**: same 57 events, same UIDs, same dates, same `VTIMEZONE` and its 11 DST `RRULE`s, same line folding, same long titles that force truncation. So every test exercises the same code paths on the same dates as the live feed.
 
-**To deploy:** paste `serverless.js` into TRMNL, then replace its `SEMESTER` block with the one from `local/semester.local.js`.
+**To deploy, build the file — don't hand-swap the config:**
+
+```bash
+node tools/build-serverless.mjs blackboard-week
+# -> plugins/blackboard-week/local/serverless.deploy.js  (gitignored)
+```
+
+Paste **that** into TRMNL's Serverless tab. Pasting the committed `serverless.js` directly deploys the placeholder semester — course names like "MGT 0000" and "Analytics" that look like real data on the screen. That happened once; the build step exists so it can't happen again, and it fails loudly if the example block survives substitution.
+
+**To refresh the fixture after recapturing the feed:**
+
+```bash
+curl -s "<share link>" -o plugins/blackboard-week/local/learn.real.ics
+node tools/scrub-ics.mjs \
+  plugins/blackboard-week/local/learn.real.ics \
+  plugins/blackboard-week/samples/learn.ics
+```
+
+It asserts structural parity (event count, UIDs, DTSTARTs, RRULEs, escaped commas) and refuses to write a mismatched file.
 
 ## What the Blackboard feed actually contains
 
@@ -74,7 +92,9 @@ So [`serverless.js`](serverless.js) calls `fetch()` itself. TRMNL Serverless (No
 
 ### When course attribution breaks
 
-New courses get new UID blocks, so `uidRanges` goes stale each semester. The function reports `unassigned_count`, and `test.mjs` asserts it is zero for every upcoming item — so a stale mapping fails the test suite rather than silently rendering an unlabelled assignment. To fix: find the new UIDs and add a range.
+**UID ranges drift during the semester, not just between semesters.** Gradebook IDs come from one global sequence, so a column the instructor adds in week 6 gets an ID far above its course's original block. Observed live: the feed grew 57 → 65 events, and three new items landed in `_3204xxx`, `_3214xxx` and `_3216xxx`. Two were caught by `titleRules`; one matched nothing and rendered a `?` chip. Ranges handle the bulk created at course setup; `titleRules` is what catches the stragglers, so keep it stocked with each course's distinctive vocabulary.
+
+New courses also get new UID blocks, so `uidRanges` goes stale each semester. The function reports `unassigned_count`, and `test.mjs` asserts it is zero for every upcoming item — so a stale mapping fails the test suite rather than silently rendering an unlabelled assignment. To fix: find the new UIDs and add a range.
 
 ```bash
 # Which UID blocks exist, and what's in them
